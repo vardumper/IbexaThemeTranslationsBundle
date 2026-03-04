@@ -36,6 +36,27 @@ return [
 ];
 ```
 
+### 3. Register Entities
+```yaml
+# config/packages/doctrine.yaml
+doctrine:
+    orm:
+        mappings:
+            IbexaThemeTranslationsBundle:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/vendor/vardumper/ibexa-theme-translations-bundle/src/Entity'
+                prefix: 'vardumper\IbexaThemeTranslationsBundle\Entity'
+                alias: IbexaThemeTranslations
+```
+
+### 4. Register Routes
+```yaml
+# config/routes/ibexa_theme_translations.yaml
+ibexa_theme_translations:
+    resource: '@IbexaThemeTranslationsBundle/config/routes.yaml'
+```
+
 ## Run Tests
 This library is fully unit tested with PEST. You can run the tests by executing the following commands in the root directory of the project.
 
