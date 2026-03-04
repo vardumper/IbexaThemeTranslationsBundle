@@ -23,7 +23,7 @@ While there are a couple of i18n concepts pre-included with Ibexa, they lack a u
 ### 1. Install the bundle
 
 ```bash
-composer require fork/ibexa-theme-translations-bundle
+composer require vardumper/ibexa-theme-translations-bundle
 ```
 
 ### 2. Register the bundle in your `config/bundles.php`:
