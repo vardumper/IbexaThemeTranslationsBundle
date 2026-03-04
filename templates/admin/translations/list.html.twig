@@ -1,0 +1,590 @@
+{% extends '@ibexadesign/ui/layout.html.twig' %}
+{% form_theme form '@ibexadesign/ui/form_fields.html.twig'  %}
+{% block title %}Theme Translations{% endblock %}
+
+{%- block breadcrumbs -%}
+    {% include '@ibexadesign/ui/breadcrumbs.html.twig' with { items: [
+        { value: 'Admin' },
+        { value: 'Manage Theme Translations' }
+    ]} %}
+{%- endblock -%}
+
+{% block context_menu %}
+    {% set menu_items %}
+        <li class="ibexa-context-menu__item ibexa-adaptive-items__item">
+            <a
+                href="{{ path('ibexa_theme_translations.export') }}"
+                class="btn ibexa-btn ibexa-btn--secondary"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <span class="ibexa-btn__label">
+                    CSV Export
+                    <svg class="ibexa-icon ibexa-icon--small" style="margin-left:10px;">
+                        <use xlink:href="{{ ibexa_icon_path('download') }}"></use>
+                    </svg>
+                </span>
+
+            </a>
+        </li>
+        <li class="ibexa-context-menu__item ibexa-adaptive-items__item">
+            <a
+                href="{{ path('ibexa_theme_translations.import') }}"
+                class="btn ibexa-btn ibexa-btn--secondary"
+            >
+                <span class="ibexa-btn__label">
+                    CSV Import
+                    <svg class="ibexa-icon ibexa-icon--small" style="margin-left:10px;">
+                        <use xlink:href="{{ ibexa_icon_path('upload') }}"></use>
+                    </svg>
+                </span>
+            </a>
+        </li>
+        <li class="ibexa-context-menu__item ibexa-adaptive-items__item">
+            <a
+                href="{{ path('ibexa_theme_translations.create') }}"
+                class="btn ibexa-btn ibexa-btn--primary"
+            >
+                <span class="ibexa-btn__label">
+                    Add translation
+                </span>
+            </a>
+        </li>
+    {% endset %}
+
+    {{ include('@ibexadesign/ui/component/context_menu/context_menu.html.twig', {
+        menu_items: menu_items,
+    }) }}
+{% endblock %}
+
+{%- block header -%}
+    {% include '@ibexadesign/ui/page_title.html.twig' with {
+        title: 'Manage Theme Translations',
+    } %}
+{%- endblock -%}
+
+{%- block content -%}
+    <section>
+        <form name="translations_filter" class="ibexa-search-links-form" action="{{ path('ibexa_theme_translations.list') }}" method="get">
+            <div class="ibexa-search-translations-form__languageCode-wrapper">
+                {{ form_row(form.languageCode) }}
+            </div>
+            &nbsp;
+            <div class="ibexa-search-translations-form__status-wrapper">
+                {{ form_row(form.status) }}
+            </div>
+            &nbsp;
+            <div class="ibexa-search-translations-form__per-page-wrapper">
+                {{ form_row(form.perPage) }}
+            </div>
+            &nbsp;
+            <div class="ibexa-search-translations-form__search-wrapper" style="display:inline-block; margin-right:10px;">
+                {{ form_widget(form.search) }}
+            </div>
+            &nbsp;
+            {{ form_widget(form.submit) }}
+            <button type="button" id="translations-reset-btn" class="btn ibexa-btn ibexa-btn--secondary" style="margin-left:6px;">Reset</button>
+            <input type="hidden" name="sort_by" value="{{ sortBy }}">
+            <input type="hidden" name="sort_dir" value="{{ sortDir }}">
+        {{ form_end(form) }}
+    </section>
+
+    <section class="container ibexa-container">
+        {%- set _si = sortBy == 'id'          ? (sortDir == 'ASC' ? ' ▲' : ' ▼') : '' -%}
+        {%- set _sk = sortBy == 'transKey'     ? (sortDir == 'ASC' ? ' ▲' : ' ▼') : '' -%}
+        {%- set _sl = sortBy == 'languageCode' ? (sortDir == 'ASC' ? ' ▲' : ' ▼') : '' -%}
+        {%- set _st = sortBy == 'translation'  ? (sortDir == 'ASC' ? ' ▲' : ' ▼') : '' -%}
+        {%- set th_id    %}<a href="#" class="sort-link" data-sort-col="id"          style="color:inherit;text-decoration:none;">#{{ _si }}</a>{%- endset -%}
+        {%- set th_key   %}<a href="#" class="sort-link" data-sort-col="transKey"    style="color:inherit;text-decoration:none;">Key{{ _sk }}</a>{%- endset -%}
+        {%- set th_lang  %}<a href="#" class="sort-link" data-sort-col="languageCode" style="color:inherit;text-decoration:none;">Language Code{{ _sl }}</a>{%- endset -%}
+        {%- set th_trans %}<a href="#" class="sort-link" data-sort-col="translation" style="color:inherit;text-decoration:none;">Translation{{ _st }}</a>{%- endset -%}
+        {% set body_rows = [] %}
+        {% for translation in translations.currentPageResults %}
+            {% set draftLangMap = draftsMap[translation.transKey]|default({}) %}
+            {% set draft = draftLangMap[translation.languageCode]|default(null) %}
+
+            {% set col_actions %}
+                {% if deeplConfigured %}
+                    <button type="button"
+                            class="btn ibexa-btn ibexa-btn--ghost btn-deepl-translate"
+                            data-deepl-url="{{ path('ibexa_theme_translations.deepl_translate', {'id': translation.id}) }}"
+                            title="Auto-translate"
+                            style="padding:2px 6px; margin-right:4px;">
+                        <svg class="ibexa-icon ibexa-icon--small ibexa-icon--languages">
+                            <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#languages"></use>
+                        </svg>
+                    </button>
+                {% else %}
+                    <button type="button"
+                            class="btn ibexa-btn ibexa-btn--ghost"
+                            disabled
+                            title="Automatic Translation service is not configured"
+                            style="padding:2px 6px; margin-right:4px; opacity:0.4; cursor:not-allowed;">
+                        <svg class="ibexa-icon ibexa-icon--small ibexa-icon--languages">
+                            <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#languages"></use>
+                        </svg>
+                    </button>
+                {% endif %}
+                <a class="btn ibexa-btn ibexa-btn--ghost ibexa-btn--content-edit"
+                    href="{{ path('ibexa_theme_translations.edit', { 'id': translation.id }) }}"
+                    title="Edit Translation">
+                    <svg class="ibexa-icon ibexa-icon--small ibexa-icon--edit">
+                        <use xlink:href="{{ ibexa_icon_path('edit') }}"></use>
+                    </svg>
+                </a>
+                <a class="btn ibexa-btn ibexa-btn--ghost ibexa-btn--content-delete"
+                    href="{{ path('ibexa_theme_translations.delete', { 'id': translation.id }) }}"
+                    title="Delete Translation"
+                    onclick="return confirm('Are you sure you want to delete this translation?')">
+                    <svg class="ibexa-icon ibexa-icon--small ibexa-icon--delete">
+                        <use xlink:href="{{ ibexa_icon_path('trash') }}"></use>
+                    </svg>
+                </a>
+            {% endset %}
+
+            {% set col_language %}
+                {{ translation.languageCode }}
+                {% if translation.languageCode not in activeLanguages %}
+                    <svg class="ibexa-icon ibexa-icon--small" style="fill:#f5a623; vertical-align:middle; margin-left:4px;" title="Language not active in any siteaccess">
+                        <use xlink:href="{{ ibexa_icon_path('warning') }}"></use>
+                    </svg>
+                {% endif %}
+            {% endset %}
+
+            {% set col_translation %}
+                <div class="inline-edit-cell"
+                     data-save-url="{{ path('ibexa_theme_translations.inline_save', { 'id': translation.id }) }}"
+                     data-original="{{ translation.translation|e('html_attr') }}"
+                     {% if draft %}
+                     data-draft-id="{{ draft.id }}"
+                     data-accept-url="{{ path('ibexa_theme_translations.draft_accept', {'id': draft.id}) }}"
+                     data-revert-url="{{ path('ibexa_theme_translations.draft_revert', {'id': draft.id}) }}"
+                     data-draft-translation="{{ draft.translation|e('html_attr') }}"
+                     {% endif %}
+                     style="display:flex; flex-direction:column; gap:4px;">
+
+                    {# --- Draft section (visible when a draft exists) --- #}
+                    <div class="draft-cell__pending"
+                         style="display:{% if draft %}flex{% else %}none{% endif %}; align-items:center; gap:6px; width:100%;">
+                        <span style="font-size:11px; background:#fff3cd; color:#856404; padding:1px 6px; border-radius:3px; white-space:nowrap; flex-shrink:0;">Pending</span>
+                        <span class="draft-text" style="flex:1; font-style:italic; color:#333; word-break:break-word; min-width:0;">{{ draft ? draft.translation : '' }}</span>
+                        <button type="button" class="btn ibexa-btn ibexa-btn--ghost btn-draft-accept"
+                                title="Accept — apply this draft as the active translation"
+                                aria-label="Accept draft">
+                            <svg class="ibexa-icon ibexa-icon--small ibexa-icon--approved">
+                                <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#approved"></use>
+                            </svg>
+                        </button>
+                        <button type="button" class="btn ibexa-btn ibexa-btn--ghost btn-draft-revert"
+                                title="Revert — discard this draft"
+                                aria-label="Revert draft">
+                            <svg class="ibexa-icon ibexa-icon--small ibexa-icon--undo">
+                                <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#undo"></use>
+                            </svg>
+                        </button>
+                    </div>
+
+                    {# --- Normal / current-value section --- #}
+                    <div class="draft-cell__normal"
+                         style="display:flex; align-items:center; gap:6px; width:100%;{% if draft %} opacity:0.5; font-size:12px;{% endif %}">
+                        {% if draft %}<span style="flex-shrink:0; color:#888;">Current:</span>{% endif %}
+                        <span class="inline-edit-text"
+                              style="flex:1; min-width:0; min-height:1.5em; outline:none; white-space:pre-wrap; word-break:break-word; cursor:text;">{{ translation.translation }}</span>
+                        <button type="button" class="btn ibexa-btn ibexa-btn--ghost inline-edit-check"
+                                style="display:none; flex-shrink:0;" title="Save" aria-label="Save">
+                            <svg class="ibexa-icon ibexa-icon--small ibexa-icon--checkmark">
+                                <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#checkmark"></use>
+                            </svg>
+                        </button>
+                    </div>
+
+                </div>
+            {% endset %}
+
+            {% set body_rows = body_rows|merge([{
+                cols: [
+                    { content: translation.id },
+                    { content: translation.transKey },
+                    { content: col_language, raw: true },
+                    { content: col_translation, raw: true },
+                    { content: col_actions, raw: true },
+                ],
+            }]) %}
+        {% endfor %}
+
+        {% include '@ibexadesign/ui/component/table/table.html.twig' with {
+            headline: 'Theme Translations',
+            head_cols: [
+                { content: th_id,    raw: true },
+                { content: th_key,   raw: true },
+                { content: th_lang,  raw: true },
+                { content: th_trans, raw: true },
+                { content: '', attr: { style: 'min-width:20%;width:20%' } },
+            ],
+            class: 'ibexa-table',
+            body_rows
+        } %}
+
+        {% if translations.haveToPaginate %}
+            {% include '@ibexadesign/ui/pagination.html.twig' with {
+                'pager': translations
+            } %}
+        {% endif %}
+    </section>
+
+    <script>
+    // URL templates for dynamically created drafts (ID 0 is replaced in JS)
+    var DEEPL_DRAFT_ACCEPT_TMPL = '{{ path('ibexa_theme_translations.draft_accept', {'id': 0}) }}';
+    var DEEPL_DRAFT_REVERT_TMPL = '{{ path('ibexa_theme_translations.draft_revert', {'id': 0}) }}';
+
+    (function () {
+        var STORAGE_KEY = 'ibexa_translations_filter';
+
+        function getStored() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) { return {}; }
+        }
+
+        function persist(form) {
+            var search   = form.querySelector('[name="translations_filter[search]"]');
+            var language = form.querySelector('[name="translations_filter[languageCode]"]');
+            var status   = form.querySelector('[name="translations_filter[status]"]');
+            var perPage  = form.querySelector('[name="translations_filter[perPage]"]');
+            var sortBy   = form.querySelector('[name="sort_by"]');
+            var sortDir  = form.querySelector('[name="sort_dir"]');
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                search:       search   ? search.value   : '',
+                languageCode: language ? language.value : '',
+                status:       status   ? status.value   : '',
+                perPage:      perPage  ? perPage.value  : '25',
+                sort_by:      sortBy   ? sortBy.value   : 'id',
+                sort_dir:     sortDir  ? sortDir.value  : 'ASC',
+            }));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var form     = document.querySelector('form[name="translations_filter"]');
+            if (!form) return;
+
+            var search   = form.querySelector('[name="translations_filter[search]"]');
+            var language = form.querySelector('[name="translations_filter[languageCode]"]');
+            var status   = form.querySelector('[name="translations_filter[status]"]');
+            var perPage  = form.querySelector('[name="translations_filter[perPage]"]');
+            var sortBy   = form.querySelector('[name="sort_by"]');
+            var sortDir  = form.querySelector('[name="sort_dir"]');
+
+            // If no filter params in URL, restore from localStorage and auto-submit if values exist
+            var hasUrlFilters = window.location.search.indexOf('translations_filter') !== -1 ||
+                                window.location.search.indexOf('sort_by') !== -1;
+            if (!hasUrlFilters) {
+                var stored = getStored();
+                var hasStored = stored.search || stored.languageCode || stored.status ||
+                    (stored.perPage && stored.perPage !== '25') ||
+                    (stored.sort_by && stored.sort_by !== 'id') ||
+                    (stored.sort_dir && stored.sort_dir !== 'ASC');
+                if (hasStored) {
+                    if (search   && stored.search       !== undefined) search.value   = stored.search;
+                    if (language && stored.languageCode !== undefined) language.value = stored.languageCode;
+                    if (status   && stored.status       !== undefined) status.value   = stored.status;
+                    if (perPage  && stored.perPage      !== undefined) perPage.value  = stored.perPage;
+                    if (sortBy   && stored.sort_by      !== undefined) sortBy.value   = stored.sort_by;
+                    if (sortDir  && stored.sort_dir     !== undefined) sortDir.value  = stored.sort_dir;
+                    form.submit();
+                    return;
+                }
+            }
+
+            // Persist on dropdown change (user still clicks Filter to submit)
+            if (language) language.addEventListener('change', function () { persist(form); });
+            if (status)   status.addEventListener('change',   function () { persist(form); });
+
+            // perPage: persist + auto-submit immediately on change
+            if (perPage) {
+                perPage.addEventListener('change', function () {
+                    persist(form);
+                    form.submit();
+                });
+            }
+
+            // Live search: debounce 1 s, persist + auto-submit
+            if (search) {
+                var timer;
+                search.addEventListener('input', function () {
+                    persist(form);
+                    clearTimeout(timer);
+                    timer = setTimeout(function () { form.submit(); }, 1000);
+                });
+            }
+
+            // Reset button: clear all fields + localStorage, then submit
+            var resetBtn = document.getElementById('translations-reset-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function () {
+                    clearTimeout(timer);
+                    localStorage.removeItem(STORAGE_KEY);
+                    if (search)   search.value   = '';
+                    if (language) language.value = '';
+                    if (status)   status.value   = '';
+                    if (perPage)  perPage.value  = '25';
+                    if (sortBy)   sortBy.value   = 'id';
+                    if (sortDir)  sortDir.value  = 'ASC';
+                    form.submit();
+                });
+            }
+
+            // Sort column headers
+            document.querySelectorAll('.sort-link').forEach(function (link) {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var col = link.dataset.sortCol;
+                    if (!col) return;
+                    var currentCol = sortBy  ? sortBy.value  : 'id';
+                    var currentDir = sortDir ? sortDir.value : 'ASC';
+                    var newDir     = (currentCol === col && currentDir === 'ASC') ? 'DESC' : 'ASC';
+                    if (sortBy)  sortBy.value  = col;
+                    if (sortDir) sortDir.value = newDir;
+                    persist(form);
+                    form.submit();
+                });
+            });
+        });
+    }());
+
+    // Inline editing
+    (function () {
+        function escHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function attachDraftButtons(cell) {
+            var acceptBtn = cell.querySelector('.btn-draft-accept');
+            var revertBtn = cell.querySelector('.btn-draft-revert');
+            if (acceptBtn) {
+                acceptBtn.addEventListener('click', function () { handleAccept(cell); });
+            }
+            if (revertBtn) {
+                revertBtn.addEventListener('click', function () { handleRevert(cell); });
+            }
+        }
+
+        function handleAccept(cell) {
+            var acceptUrl = cell.dataset.acceptUrl;
+            if (!acceptUrl) return;
+            fetch(acceptUrl, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data.success) {
+                    // Move draft text to normal, hide draft section
+                    var pendingDiv = cell.querySelector('.draft-cell__pending');
+                    var normalDiv  = cell.querySelector('.draft-cell__normal');
+                    var textSpan   = cell.querySelector('.inline-edit-text');
+                    var draftText  = cell.dataset.draftTranslation || data.translation || '';
+
+                    textSpan.textContent = draftText;
+                    cell.dataset.original = draftText;
+                    normalDiv.style.opacity  = '';
+                    normalDiv.style.fontSize = '';
+                    var currentLabel = normalDiv.querySelector('span[style*="flex-shrink:0"]');
+                    if (currentLabel) currentLabel.remove();
+                    pendingDiv.style.display = 'none';
+                    delete cell.dataset.draftId;
+                    delete cell.dataset.acceptUrl;
+                    delete cell.dataset.revertUrl;
+                    delete cell.dataset.draftTranslation;
+                }
+            }).catch(function () {
+                alert('Accept failed. Please reload the page.');
+            });
+        }
+
+        function handleRevert(cell) {
+            var revertUrl = cell.dataset.revertUrl;
+            if (!revertUrl) return;
+            fetch(revertUrl, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data.success) {
+                    var pendingDiv = cell.querySelector('.draft-cell__pending');
+                    var normalDiv  = cell.querySelector('.draft-cell__normal');
+                    normalDiv.style.opacity  = '';
+                    normalDiv.style.fontSize = '';
+                    var currentLabel = normalDiv.querySelector('span[style*="flex-shrink:0"]');
+                    if (currentLabel) currentLabel.remove();
+                    pendingDiv.style.display = 'none';
+                    delete cell.dataset.draftId;
+                    delete cell.dataset.acceptUrl;
+                    delete cell.dataset.revertUrl;
+                    delete cell.dataset.draftTranslation;
+                }
+            }).catch(function () {
+                alert('Revert failed. Please reload the page.');
+            });
+        }
+
+        function showNewDraft(cell, draftId, draftTranslation) {
+            var acceptUrl = DEEPL_DRAFT_ACCEPT_TMPL.replace(/\/0$/, '/' + draftId);
+            var revertUrl = DEEPL_DRAFT_REVERT_TMPL.replace(/\/0$/, '/' + draftId);
+            cell.dataset.draftId = draftId;
+            cell.dataset.acceptUrl = acceptUrl;
+            cell.dataset.revertUrl = revertUrl;
+            cell.dataset.draftTranslation = draftTranslation;
+
+            var pendingDiv = cell.querySelector('.draft-cell__pending');
+            var normalDiv  = cell.querySelector('.draft-cell__normal');
+            var draftTextSpan = cell.querySelector('.draft-text');
+
+            if (draftTextSpan) draftTextSpan.textContent = draftTranslation;
+
+            // Add accept/revert buttons if not present yet
+            if (!pendingDiv.querySelector('.btn-draft-accept')) {
+                var acceptBtn = document.createElement('button');
+                acceptBtn.type = 'button';
+                acceptBtn.className = 'btn ibexa-btn ibexa-btn--ghost btn-draft-accept';
+                acceptBtn.title = 'Accept draft';
+                acceptBtn.setAttribute('aria-label', 'Accept draft');
+                acceptBtn.innerHTML = '<svg class="ibexa-icon ibexa-icon--small ibexa-icon--approved"><use xlink:href="/bundles/ibexaicons/img/all-icons.svg#approved"></use></svg>';
+                pendingDiv.appendChild(acceptBtn);
+
+                var revertBtn = document.createElement('button');
+                revertBtn.type = 'button';
+                revertBtn.className = 'btn ibexa-btn ibexa-btn--ghost btn-draft-revert';
+                revertBtn.title = 'Revert draft';
+                revertBtn.setAttribute('aria-label', 'Revert draft');
+                revertBtn.innerHTML = '<svg class="ibexa-icon ibexa-icon--small ibexa-icon--undo"><use xlink:href="/bundles/ibexaicons/img/all-icons.svg#undo"></use></svg>';
+                pendingDiv.appendChild(revertBtn);
+            }
+
+            pendingDiv.style.display = 'flex';
+            normalDiv.style.opacity  = '0.5';
+            normalDiv.style.fontSize = '12px';
+
+            // Add "Current:" label if not there
+            var textSpan = normalDiv.querySelector('.inline-edit-text');
+            if (!normalDiv.querySelector('.current-label') && textSpan) {
+                var label = document.createElement('span');
+                label.className = 'current-label';
+                label.style.cssText = 'flex-shrink:0; color:#888;';
+                label.textContent = 'Current:';
+                normalDiv.insertBefore(label, textSpan);
+            }
+
+            attachDraftButtons(cell);
+        }
+
+        // Attach inline editing to each cell
+        document.querySelectorAll('.inline-edit-cell').forEach(function (cell) {
+            var textSpan  = cell.querySelector('.inline-edit-text');
+            var checkSpan = cell.querySelector('.inline-edit-check');
+            var saveUrl   = cell.dataset.saveUrl;
+            var isSaving  = false;
+
+            function enableEdit() {
+                if (textSpan.getAttribute('contenteditable') === 'true') return;
+                textSpan.setAttribute('contenteditable', 'true');
+                textSpan.style.outline  = '1px solid #ccc';
+                textSpan.style.padding  = '2px 4px';
+                checkSpan.style.display = '';
+                checkSpan.style.color   = '#000';
+                textSpan.focus();
+                var range = document.createRange();
+                range.selectNodeContents(textSpan);
+                range.collapse(false);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+
+            function save() {
+                if (isSaving) return;
+                isSaving = true;
+                textSpan.removeAttribute('contenteditable');
+                textSpan.style.outline  = '';
+                textSpan.style.padding  = '';
+                checkSpan.style.display = 'none';
+
+                var newValue      = textSpan.textContent;
+                var originalValue = cell.dataset.original;
+
+                if (newValue === originalValue) {
+                    isSaving = false;
+                    return;
+                }
+
+                fetch(saveUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ translation: newValue })
+                }).then(function (res) {
+                    isSaving = false;
+                    if (res.ok) {
+                        cell.dataset.original   = newValue;
+                        checkSpan.style.color   = '#27ae60';
+                        checkSpan.style.display = '';
+                        setTimeout(function () {
+                            checkSpan.style.display = 'none';
+                            checkSpan.style.color   = '#000';
+                        }, 5000);
+                    } else {
+                        textSpan.textContent = originalValue;
+                    }
+                }).catch(function () {
+                    isSaving = false;
+                    textSpan.textContent = originalValue;
+                });
+            }
+
+            cell.addEventListener('click', function (e) {
+                if (e.target.classList.contains('btn-draft-accept') ||
+                    e.target.classList.contains('btn-draft-revert') ||
+                    e.target === checkSpan) return;
+                enableEdit();
+            });
+            textSpan.addEventListener('blur', save);
+
+            checkSpan.addEventListener('mousedown', function (e) { e.preventDefault(); });
+            checkSpan.addEventListener('click', function (e) { e.stopPropagation(); save(); });
+
+            // Attach draft accept/revert for server-rendered drafts
+            attachDraftButtons(cell);
+        });
+
+        // DeepL translate buttons
+        document.querySelectorAll('.btn-deepl-translate').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var row = btn.closest('tr');
+                var cell = row ? row.querySelector('.inline-edit-cell') : null;
+                var url  = btn.dataset.deeplUrl;
+                if (!url) return;
+
+                var origHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '&#8230;';
+
+                var fetchHeaders = { 'X-Requested-With': 'XMLHttpRequest' };
+                console.log('[DeepL] POST', url, { headers: fetchHeaders, body: null });
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: fetchHeaders
+                }).then(function (r) { return r.json(); }).then(function (data) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHTML;
+                    if (data.success && cell) {
+                        showNewDraft(cell, data.draftId, data.draftTranslation);
+                    } else {
+                        alert('DeepL: ' + (data.error || 'Unknown error'));
+                    }
+                }).catch(function () {
+                    btn.disabled = false;
+                    btn.innerHTML = origHTML;
+                    alert('Network error calling DeepL');
+                });
+            });
+        });
+    }());
+    </script>
+{%- endblock -%}

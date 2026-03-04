@@ -1,0 +1,104 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Auto-register all bundle services
+    fork\IbexaThemeTranslationsBundle\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/IbexaThemeTranslationsBundle.php'
+
+    # Cache: Static Array (Tier 1)
+    fork\IbexaThemeTranslationsBundle\Cache\StaticArrayTranslationCache:
+        arguments:
+            $cacheDir: '%ibexa_theme_translations.cache_dir%'
+        tags:
+            - { name: ibexa_theme_translations.cache }
+
+    # Dedicated cache pool for theme translations (tag-aware so we can tag/invalidate by language)
+    cache.ibexa_theme_translations:
+        parent: cache.redis
+        tags:
+            - { name: cache.pool, namespace: 'theme_translations' }
+
+    # Cache: Redis (Tier 2)
+    fork\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache:
+        arguments:
+            $cache: '@cache.ibexa_theme_translations'
+            $prefix: '%ibexa_theme_translations.redis.prefix%'
+        tags:
+            - { name: ibexa_theme_translations.cache }
+
+    # Cache: Public static files for headless front-ends (JSON + TypeScript, Tier 3)
+    fork\IbexaThemeTranslationsBundle\Cache\PublicTranslationsCache:
+        arguments:
+            $outputDir: '%kernel.project_dir%/public/bundles/theme-translations'
+        tags:
+            - { name: ibexa_theme_translations.cache }
+
+    # Cache Warmer: receives all tagged caches via tagged iterator
+    fork\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer:
+        arguments:
+            $caches: !tagged_iterator ibexa_theme_translations.cache
+
+    # Translation Service
+    fork\IbexaThemeTranslationsBundle\Service\TranslationService: ~
+
+    # DeepL Translation Service — ClientProvider is optional (only in DIC when DeepL is configured)
+    fork\IbexaThemeTranslationsBundle\Service\DeeplTranslationService:
+        arguments:
+            $localeConverter: '@Ibexa\Core\MVC\Symfony\Locale\LocaleConverterInterface'
+            $clientProvider: '@?Ibexa\AutomatedTranslation\ClientProvider'
+
+    # Auto-endpoint DeepL client: replaces the bundled client in ClientProvider.
+    # Detects free (:fx suffix) vs pro keys and routes to the correct API host.
+    # Loaded after IbexaAutomatedTranslationBundle so it wins the 'deepl' slot.
+    fork\IbexaThemeTranslationsBundle\Client\Deepl:
+        tags:
+            - { name: ibexa.automated_translation.client }
+
+    fork\IbexaThemeTranslationsBundle\Service\TranslationServiceInterface:
+        alias: fork\IbexaThemeTranslationsBundle\Service\TranslationService
+
+    # Default LanguageResolver implementation (can be overridden in the app's services.yaml)
+    fork\IbexaThemeTranslationsBundle\Service\IbexaLanguageResolver: ~
+
+    fork\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface:
+        alias: fork\IbexaThemeTranslationsBundle\Service\IbexaLanguageResolver
+
+    # Twig Runtime
+    fork\IbexaThemeTranslationsBundle\Twig\TranslationRuntime:
+        arguments:
+            $defaultLanguage: '%ibexa_theme_translations.default_language%'
+        tags:
+            - { name: twig.runtime }
+
+    # Twig Extension
+    fork\IbexaThemeTranslationsBundle\Twig\TranslationExtension:
+        tags:
+            - { name: twig.extension }
+
+    # Controller
+    fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController:
+        calls:
+            - [setContainer, ['@service_container']]
+
+    # FieldType Registration
+    fork\IbexaThemeTranslationsBundle\FieldType\Translation\Type:
+        tags:
+            - { name: ibexa.field_type, alias: translation }
+            - { name: ibexa.admin_ui.field_type.form.mapper.value, fieldType: translation }
+
+    # FieldType indexable (unindexed)
+    ibexa_theme_translations.field_type.translation.indexable:
+        class: Ibexa\Core\FieldType\Unindexed
+        tags:
+            - { name: ibexa.field_type.indexable, alias: translation }
+
+    # Doctrine Entity Listener
+    fork\IbexaThemeTranslationsBundle\EventListener\TranslationCacheInvalidationListener:
+        tags:
+            - { name: doctrine.orm.entity_listener }

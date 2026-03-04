@@ -1,0 +1,217 @@
+{% extends '@ibexadesign/ui/layout.html.twig' %}
+
+{% form_theme form '@ibexadesign/ui/form_fields.html.twig'  %}
+
+{% block title %}Edit a Theme Translations{% endblock %}
+
+{%- block breadcrumbs -%}
+    {% include '@ibexadesign/ui/breadcrumbs.html.twig' with { items: [
+        { value: 'Admin' },
+        { value: 'Manage Theme Translations' },
+        { value: 'Edit Theme Translations' }
+    ]} %}
+{%- endblock -%}
+
+{% block context_menu %}
+    {% set menu_items %}
+        <li class="ibexa-context-menu__item ibexa-adaptive-items__item">
+            {% if deeplConfigured %}
+                <button type="button"
+                        id="btn-deepl-edit"
+                        class="btn ibexa-btn ibexa-btn--secondary"
+                        data-deepl-url="{{ path('ibexa_theme_translations.deepl_translate', {'id': translation.id}) }}"
+                        title="Auto-translate with DeepL"
+                >
+                    <svg class="ibexa-icon ibexa-icon--small ibexa-icon--ai">
+                        <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#ai"></use>
+                    </svg>
+                </button>
+            {% else %}
+                <button type="button"
+                        class="btn ibexa-btn ibexa-btn--secondary"
+                        disabled
+                        title="DeepL is not configured"
+                        style="opacity:0.4; cursor:not-allowed;"
+                >
+                    <svg class="ibexa-icon ibexa-icon--small ibexa-icon--ai">
+                        <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#ai"></use>
+                    </svg>
+                </button>
+            {% endif %}
+        </li>
+        <li class="ibexa-context-menu__item ibexa-adaptive-items__item">
+            <a
+                href="{{ path('ibexa_theme_translations.list') }}"
+                class="btn ibexa-btn ibexa-btn--secondary"
+            >
+                <span class="ibexa-btn__label">
+                    Cancel
+                </span>
+            </a>
+        </li>
+    {% endset %}
+
+    {{ include('@ibexadesign/ui/component/context_menu/context_menu.html.twig', {
+        menu_items: menu_items,
+    }) }}
+{% endblock %}
+
+{%- block header -%}
+    {% include '@ibexadesign/ui/page_title.html.twig' with {
+        title: 'Edit Theme Translation',
+    } %}
+{%- endblock -%}
+
+{%- block content -%}
+    <div class="ibexa-edit-content__container">
+    {{ form_errors(form) }}
+
+    {# DeepL draft section #}
+    <div id="draft-section"
+         data-translation-id="{{ translation.id }}"
+         {% if draft %}
+         data-draft-id="{{ draft.id }}"
+         data-accept-url="{{ path('ibexa_theme_translations.draft_accept', {'id': draft.id}) }}"
+         data-revert-url="{{ path('ibexa_theme_translations.draft_revert', {'id': draft.id}) }}"
+         data-draft-translation="{{ draft.translation|e('html_attr') }}"
+         {% endif %}
+         style="{% if not draft %}display:none;{% endif %} margin-bottom: 16px; padding: 12px 16px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+        <div style="display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+                <strong style="color:#856404; display:block; margin-bottom:4px;">
+                    Pending Approval — DeepL Draft
+                </strong>
+                <span id="draft-translation-text" style="color:#333;">{{ draft ? draft.translation : '' }}</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-shrink:0;">
+                <button type="button" id="btn-accept-draft"
+                        class="btn ibexa-btn ibexa-btn--primary"
+                        style="background:#27ae60; border-color:#27ae60;">
+                    ✓ Accept
+                </button>
+                <button type="button" id="btn-revert-draft"
+                        class="btn ibexa-btn ibexa-btn--secondary"
+                        style="color:#c0392b; border-color:#c0392b;">
+                    ✕ Revert
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {% block create_form %}
+        {{ form_start(form) }}
+        {% for key, field in form.children %}
+            <div class="mb-3">
+            {% if key in ['transKey', 'languageCode'] %}
+            {{ form_row(field, {'attr': {'readonly': 'readonly'}}) }}
+            {% else %}
+            {{ form_row(field) }}
+            {% endif %}
+            </div>
+        {% endfor %}
+        {{ form_end(form, { 'render_rest': false }) }}
+    {% endblock %}
+    </div>
+
+    <script>
+    (function () {
+        var section   = document.getElementById('draft-section');
+        var textEl    = document.getElementById('draft-translation-text');
+        var acceptBtn = document.getElementById('btn-accept-draft');
+        var revertBtn = document.getElementById('btn-revert-draft');
+        var deeplBtn  = document.getElementById('btn-deepl-edit');
+
+        function showDraft(draftId, draftTranslation, acceptUrl, revertUrl) {
+            section.dataset.draftId = draftId;
+            section.dataset.acceptUrl = acceptUrl;
+            section.dataset.revertUrl = revertUrl;
+            section.dataset.draftTranslation = draftTranslation;
+            if (textEl) textEl.textContent = draftTranslation;
+            section.style.display = '';
+        }
+
+        function hideDraft() {
+            section.style.display = 'none';
+            delete section.dataset.draftId;
+            delete section.dataset.acceptUrl;
+            delete section.dataset.revertUrl;
+            delete section.dataset.draftTranslation;
+        }
+
+        // Accept draft
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', function () {
+                var url = section.dataset.acceptUrl;
+                if (!url) return;
+                acceptBtn.disabled = true;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function (r) { return r.json(); }).then(function (data) {
+                    acceptBtn.disabled = false;
+                    if (data.success) {
+                        // Update the translation textarea with the accepted value
+                        var textarea = document.querySelector('[name$="[translation]"]');
+                        if (textarea) textarea.value = data.translation;
+                        hideDraft();
+                    }
+                }).catch(function () {
+                    acceptBtn.disabled = false;
+                    alert('Accept failed. Please reload.');
+                });
+            });
+        }
+
+        // Revert draft
+        if (revertBtn) {
+            revertBtn.addEventListener('click', function () {
+                var url = section.dataset.revertUrl;
+                if (!url) return;
+                revertBtn.disabled = true;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function (r) { return r.json(); }).then(function (data) {
+                    revertBtn.disabled = false;
+                    if (data.success) {
+                        hideDraft();
+                    }
+                }).catch(function () {
+                    revertBtn.disabled = false;
+                    alert('Revert failed. Please reload.');
+                });
+            });
+        }
+
+        // DeepL translate button
+        if (deeplBtn) {
+            deeplBtn.addEventListener('click', function () {
+                var url = deeplBtn.dataset.deeplUrl;
+                if (!url) return;
+                var origHTML = deeplBtn.innerHTML;
+                deeplBtn.disabled = true;
+                deeplBtn.innerHTML = '…';
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function (r) { return r.json(); }).then(function (data) {
+                    deeplBtn.disabled = false;
+                    deeplBtn.innerHTML = origHTML;
+                    if (data.success) {
+                        var acceptUrl = '{{ path('ibexa_theme_translations.draft_accept', {'id': 0}) }}'.replace(/\/0$/, '/' + data.draftId);
+                        var revertUrl = '{{ path('ibexa_theme_translations.draft_revert', {'id': 0}) }}'.replace(/\/0$/, '/' + data.draftId);
+                        showDraft(data.draftId, data.draftTranslation, acceptUrl, revertUrl);
+                    } else {
+                        alert('DeepL: ' + (data.error || 'Unknown error'));
+                    }
+                }).catch(function () {
+                    deeplBtn.disabled = false;
+                    deeplBtn.innerHTML = origHTML;
+                    alert('Network error calling DeepL');
+                });
+            });
+        }
+    }());
+    </script>
+{%- endblock content -%}

@@ -1,0 +1,53 @@
+{% extends '@ibexadesign/ui/layout.html.twig' %}
+
+{% form_theme form '@ibexadesign/ui/form_fields.html.twig'  %}
+
+{% block title %}Import Theme Translations{% endblock %}
+
+{%- block breadcrumbs -%}
+    {% include '@ibexadesign/ui/breadcrumbs.html.twig' with { items: [
+        { value: 'Admin' },
+        { value: 'Manage Theme Translations' },
+        { value: 'Import Theme Translations' }
+    ]} %}
+{%- endblock -%}
+
+{% block context_menu %}
+    {% set menu_items %}
+        <li class="ibexa-context-menu__item ibexa-adaptive-items__item">
+            <a
+                href="{{ path('ibexa_theme_translations.list') }}"
+                class="btn ibexa-btn ibexa-btn--secondary"
+            >
+                <span class="ibexa-btn__label">
+                    Cancel
+                </span>
+            </a>
+        </li>
+    {% endset %}
+
+    {{ include('@ibexadesign/ui/component/context_menu/context_menu.html.twig', {
+        menu_items: menu_items,
+    }) }}
+{% endblock %}
+
+{%- block header -%}
+    {% include '@ibexadesign/ui/page_title.html.twig' with {
+        title: 'Import Theme Translation',
+    } %}
+{%- endblock -%}
+
+{%- block content -%}
+    <div class="ibexa-edit-content__container">
+    {{ form_errors(form) }}
+    {% block create_form %}
+        {{ form_start(form) }}
+        {% for key, field in form.children %}
+            <div class="mb-3">
+            {{ form_row(field) }}
+            </div>
+        {% endfor %}
+        {{ form_end(form) }}
+    {% endblock %}
+    </div>
+{%- endblock content -%}

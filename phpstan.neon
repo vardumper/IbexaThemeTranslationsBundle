@@ -1,0 +1,14 @@
+includes:
+parameters:
+    level: 5
+    treatPhpDocTypesAsCertain: false
+    paths:
+        - %currentWorkingDirectory%
+    excludePaths:
+        - vendor
+        - tests
+    scanFiles:
+    earlyTerminatingMethodCalls:
+    ignoreErrors:
+    reportUnmatchedIgnoredErrors: false
+    universalObjectCratesClasses:
