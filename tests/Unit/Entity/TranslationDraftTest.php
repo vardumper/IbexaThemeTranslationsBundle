@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
+use vardumper\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
 
 uses(PHPUnit\Framework\TestCase::class);
 

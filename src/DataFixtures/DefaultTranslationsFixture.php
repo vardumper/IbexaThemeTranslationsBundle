@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\DataFixtures;
+namespace vardumper\IbexaThemeTranslationsBundle\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use fork\IbexaThemeTranslationsBundle\Entity\Translation;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
+use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 
 final class DefaultTranslationsFixture extends Fixture
 {

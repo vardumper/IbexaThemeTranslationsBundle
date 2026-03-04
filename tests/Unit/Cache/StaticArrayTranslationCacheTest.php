@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Cache\StaticArrayTranslationCache;
+use vardumper\IbexaThemeTranslationsBundle\Cache\StaticArrayTranslationCache;
 
 uses(PHPUnit\Framework\TestCase::class);
 

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Service\DeeplTranslationService;
 use Ibexa\AutomatedTranslation\ClientProvider;
 use Ibexa\Contracts\AutomatedTranslation\Client\ClientInterface;
 use Ibexa\Core\MVC\Symfony\Locale\LocaleConverterInterface;
+use vardumper\IbexaThemeTranslationsBundle\Service\DeeplTranslationService;
 
 uses(PHPUnit\Framework\TestCase::class);
 

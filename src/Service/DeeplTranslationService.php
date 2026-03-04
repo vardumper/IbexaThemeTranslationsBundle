@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Service;
+namespace vardumper\IbexaThemeTranslationsBundle\Service;
 
 use Ibexa\AutomatedTranslation\ClientProvider;
 use Ibexa\Core\MVC\Symfony\Locale\LocaleConverterInterface;

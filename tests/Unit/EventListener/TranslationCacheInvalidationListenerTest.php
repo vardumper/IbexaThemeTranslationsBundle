@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Cache\StaticArrayTranslationCache;
-use fork\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
-use fork\IbexaThemeTranslationsBundle\Entity\Translation;
-use fork\IbexaThemeTranslationsBundle\EventListener\TranslationCacheInvalidationListener;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
+use vardumper\IbexaThemeTranslationsBundle\Cache\StaticArrayTranslationCache;
+use vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
+use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
+use vardumper\IbexaThemeTranslationsBundle\EventListener\TranslationCacheInvalidationListener;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 
 uses(PHPUnit\Framework\TestCase::class);
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Form\Type;
+namespace vardumper\IbexaThemeTranslationsBundle\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\EventSubscriber;
+namespace vardumper\IbexaThemeTranslationsBundle\EventSubscriber;
 
 use Ibexa\AdminUi\Menu\Event\ConfigureMenuEvent;
 use Ibexa\AdminUi\Menu\MainMenuBuilder;

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\EventListener;
+namespace vardumper\IbexaThemeTranslationsBundle\EventListener;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Events;
-use fork\IbexaThemeTranslationsBundle\Entity\Translation;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
-use fork\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
+use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
+use vardumper\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
 
 #[AsDoctrineListener(event: Events::postPersist)]
 #[AsDoctrineListener(event: Events::postFlush)]

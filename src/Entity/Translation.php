@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Entity;
+namespace vardumper\IbexaThemeTranslationsBundle\Entity;
 
-use fork\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use vardumper\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 
 #[ORM\Entity(repositoryClass: TranslationRepository::class)]
 #[ORM\Table(name: 'translation')]

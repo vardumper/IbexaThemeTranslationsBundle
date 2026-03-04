@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache;
-use fork\IbexaThemeTranslationsBundle\Cache\StaticArrayTranslationCache;
-use fork\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
-use fork\IbexaThemeTranslationsBundle\Service\TranslationService;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+use vardumper\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache;
+use vardumper\IbexaThemeTranslationsBundle\Cache\StaticArrayTranslationCache;
+use vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
+use vardumper\IbexaThemeTranslationsBundle\Service\TranslationService;
 
 uses(PHPUnit\Framework\TestCase::class);
 

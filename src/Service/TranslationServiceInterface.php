@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Service;
+namespace vardumper\IbexaThemeTranslationsBundle\Service;
 
 interface TranslationServiceInterface
 {

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Cache\TranslationCacheInterface;
-use fork\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
+use vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheInterface;
+use vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 
 uses(PHPUnit\Framework\TestCase::class);
 

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\EventSubscriber;
+namespace vardumper\IbexaThemeTranslationsBundle\EventSubscriber;
 
 use Doctrine\ORM\EntityManagerInterface;
-use fork\IbexaThemeTranslationsBundle\Entity\Translation;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 use Ibexa\Contracts\Core\Repository\Events\Language\CreateLanguageEvent;
 use Ibexa\Contracts\Core\Repository\Events\Language\DeleteLanguageEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 
 final class LanguageSyncEventSubscriber implements EventSubscriberInterface
 {

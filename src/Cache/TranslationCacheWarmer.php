@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Cache;
+namespace vardumper\IbexaThemeTranslationsBundle\Cache;
 
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 
 final class TranslationCacheWarmer
 {

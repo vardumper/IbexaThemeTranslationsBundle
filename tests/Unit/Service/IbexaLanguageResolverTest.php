@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Service\IbexaLanguageResolver;
 use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
 use Ibexa\Core\MVC\Symfony\SiteAccess;
 use Ibexa\Core\MVC\Symfony\SiteAccess\SiteAccessServiceInterface;
+use vardumper\IbexaThemeTranslationsBundle\Service\IbexaLanguageResolver;
 
 uses(PHPUnit\Framework\TestCase::class);
 

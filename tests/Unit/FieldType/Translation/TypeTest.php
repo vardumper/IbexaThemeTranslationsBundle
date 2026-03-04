@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\FieldType\Translation\Type;
-use fork\IbexaThemeTranslationsBundle\Form\Type\TranslationType;
 use Ibexa\Contracts\ContentForms\Data\Content\FieldData;
 use Ibexa\Contracts\Core\FieldType\ValueSerializerInterface;
 use Ibexa\Contracts\Core\Repository\Values\ContentType\FieldDefinition;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use vardumper\IbexaThemeTranslationsBundle\FieldType\Translation\Type;
+use vardumper\IbexaThemeTranslationsBundle\Form\Type\TranslationType;
 
 uses(PHPUnit\Framework\TestCase::class);
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\FieldType\Translation;
+namespace vardumper\IbexaThemeTranslationsBundle\FieldType\Translation;
 
 use Ibexa\Contracts\Core\FieldType\Value as ValueInterface;
 
@@ -18,7 +18,7 @@ final class Value implements ValueInterface
         return $this->translation ?? '';
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }

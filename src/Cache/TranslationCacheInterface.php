@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Cache;
+namespace vardumper\IbexaThemeTranslationsBundle\Cache;
 
 interface TranslationCacheInterface
 {

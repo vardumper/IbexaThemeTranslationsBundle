@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Client;
+namespace vardumper\IbexaThemeTranslationsBundle\Client;
 
 use GuzzleHttp\Client;
 use Ibexa\AutomatedTranslation\Exception\InvalidLanguageCodeException;

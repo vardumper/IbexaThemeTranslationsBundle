@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 use Doctrine\ORM\EntityManagerInterface;
-use fork\IbexaThemeTranslationsBundle\EventSubscriber\LanguageSyncEventSubscriber;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 use Ibexa\Contracts\Core\Repository\Events\Language\CreateLanguageEvent;
 use Ibexa\Contracts\Core\Repository\Events\Language\DeleteLanguageEvent;
 use Ibexa\Contracts\Core\Repository\Values\Content\Language;
 use Ibexa\Contracts\Core\Repository\Values\Content\LanguageCreateStruct;
+use vardumper\IbexaThemeTranslationsBundle\EventSubscriber\LanguageSyncEventSubscriber;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 
 uses(PHPUnit\Framework\TestCase::class);
 

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\FieldType\Translation;
+namespace vardumper\IbexaThemeTranslationsBundle\FieldType\Translation;
 
-use fork\IbexaThemeTranslationsBundle\Form\Type\TranslationType;
 use Ibexa\Contracts\ContentForms\Data\Content\FieldData;
 use Ibexa\Contracts\ContentForms\FieldType\FieldValueFormMapperInterface;
 use Ibexa\Contracts\Core\FieldType\Generic\Type as GenericType;
 use Symfony\Component\Form\FormInterface;
+use vardumper\IbexaThemeTranslationsBundle\Form\Type\TranslationType;
 
 final class Type extends GenericType implements FieldValueFormMapperInterface
 {

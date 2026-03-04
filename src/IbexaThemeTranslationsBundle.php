@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle;
+namespace vardumper\IbexaThemeTranslationsBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

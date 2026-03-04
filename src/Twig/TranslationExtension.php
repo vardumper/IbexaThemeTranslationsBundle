@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Twig;
+namespace vardumper\IbexaThemeTranslationsBundle\Twig;
 
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;

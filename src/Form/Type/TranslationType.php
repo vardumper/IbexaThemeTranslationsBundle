@@ -2,10 +2,8 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Form\Type;
+namespace vardumper\IbexaThemeTranslationsBundle\Form\Type;
 
-use fork\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
-use fork\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -13,6 +11,8 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use vardumper\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
+use vardumper\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
 
 final class TranslationType extends AbstractType
 {

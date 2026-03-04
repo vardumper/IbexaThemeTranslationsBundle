@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Entity;
+namespace vardumper\IbexaThemeTranslationsBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationDraftRepository;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationDraftRepository;
 
 #[ORM\Entity(repositoryClass: TranslationDraftRepository::class)]
 #[ORM\Table(name: 'translation_draft')]
@@ -15,6 +15,7 @@ class TranslationDraft
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    /** @phpstan-ignore property.unusedType */
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

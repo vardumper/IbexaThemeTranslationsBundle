@@ -1,10 +1,10 @@
 {
-    "name": "fork/ibexa-theme-translations-bundle",
+    "name": "vardumper/ibexa-theme-translations-bundle",
     "description": "Ibexa DXP bundle for managing theme translations with tiered caching (static PHP arrays + Redis + Database)",
     "type": "symfony-bundle",
     "license": "proprietary",
     "minimum-stability": "dev",
-    "homepage": "https://lab.fork.de/fork/ibexathemetransaltionsbundle",
+    "homepage": "https://github.com/vardumper/IbexaThemeTranslationsBundle",
     "prefer-stable": true,
     "authors": [
         {
@@ -42,12 +42,12 @@
     },
     "autoload": {
         "psr-4": {
-            "fork\\IbexaThemeTranslationsBundle\\": "src/"
+            "vardumper\\IbexaThemeTranslationsBundle\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "fork\\IbexaThemeTranslationsBundle\\": "tests/"
+            "vardumper\\IbexaThemeTranslationsBundle\\": "tests/"
         }
     },
     "extra": {

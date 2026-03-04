@@ -3,7 +3,7 @@ ibexa_theme_translations.list:
     methods: ['GET']
     defaults:
         page: 1
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::listAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::listAction'
     requirements:
         page: \d+
 
@@ -11,13 +11,13 @@ ibexa_theme_translations.create:
     path: /manage-translations/create
     methods: ['GET', 'POST']
     defaults:
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::createAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::createAction'
 
 ibexa_theme_translations.edit:
     path: /manage-translations/edit/{id}
     methods: ['GET', 'POST']
     defaults:
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::editAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::editAction'
     requirements:
         id: \d+
 
@@ -25,7 +25,7 @@ ibexa_theme_translations.delete:
     path: /manage-translations/delete/{id}
     methods: ['GET']
     defaults:
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::deleteAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::deleteAction'
     requirements:
         id: \d+
 
@@ -33,7 +33,7 @@ ibexa_theme_translations.inline_save:
     path: /manage-translations/inline-save/{id}
     methods: ['POST']
     defaults:
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::inlineSaveAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::inlineSaveAction'
     requirements:
         id: \d+
 
@@ -41,7 +41,7 @@ ibexa_theme_translations.deepl_translate:
     path: /manage-translations/deepl-translate/{id}
     methods: ['POST']
     defaults:
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::deeplTranslateAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::deeplTranslateAction'
     requirements:
         id: \d+
 
@@ -49,7 +49,7 @@ ibexa_theme_translations.draft_accept:
     path: /manage-translations/draft/accept/{id}
     methods: ['POST']
     defaults:
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::acceptDraftAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::acceptDraftAction'
     requirements:
         id: \d+
 
@@ -57,7 +57,7 @@ ibexa_theme_translations.draft_revert:
     path: /manage-translations/draft/revert/{id}
     methods: ['POST']
     defaults:
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::revertDraftAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::revertDraftAction'
     requirements:
         id: \d+
 
@@ -65,10 +65,10 @@ ibexa_theme_translations.export:
     path: /manage-translations/export
     methods: ['GET']
     defaults:
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::exportAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::exportAction'
 
 ibexa_theme_translations.import:
     path: /manage-translations/import
     methods: ['GET', 'POST']
     defaults:
-        _controller: 'fork\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::importAction'
+        _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::importAction'

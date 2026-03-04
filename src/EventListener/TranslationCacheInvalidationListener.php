@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\EventListener;
+namespace vardumper\IbexaThemeTranslationsBundle\EventListener;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Events;
-use fork\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
-use fork\IbexaThemeTranslationsBundle\Entity\Translation;
+use vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
+use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
 
 #[AsEntityListener(event: Events::postPersist, entity: Translation::class)]
 #[AsEntityListener(event: Events::postUpdate, entity: Translation::class)]

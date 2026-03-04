@@ -5,10 +5,10 @@ declare(strict_types=1);
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PostPersistEventArgs;
-use fork\IbexaThemeTranslationsBundle\Entity\Translation;
-use fork\IbexaThemeTranslationsBundle\EventListener\TranslationKeyPropagationListener;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
-use fork\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
+use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
+use vardumper\IbexaThemeTranslationsBundle\EventListener\TranslationKeyPropagationListener;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
+use vardumper\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
 
 uses(PHPUnit\Framework\TestCase::class);
 

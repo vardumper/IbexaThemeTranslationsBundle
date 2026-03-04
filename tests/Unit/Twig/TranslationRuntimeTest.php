@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
-use fork\IbexaThemeTranslationsBundle\Service\TranslationServiceInterface;
-use fork\IbexaThemeTranslationsBundle\Twig\TranslationRuntime;
+use vardumper\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
+use vardumper\IbexaThemeTranslationsBundle\Service\TranslationServiceInterface;
+use vardumper\IbexaThemeTranslationsBundle\Twig\TranslationRuntime;
 
 uses(PHPUnit\Framework\TestCase::class);
 

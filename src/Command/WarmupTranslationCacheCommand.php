@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Command;
+namespace vardumper\IbexaThemeTranslationsBundle\Command;
 
-use fork\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
 
 #[AsCommand(
     name: 'theme-translations:cache:warmup',

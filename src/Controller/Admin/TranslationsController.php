@@ -2,19 +2,9 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Controller\Admin;
+namespace vardumper\IbexaThemeTranslationsBundle\Controller\Admin;
 
 use Doctrine\ORM\EntityManagerInterface;
-use fork\IbexaThemeTranslationsBundle\Entity\Translation;
-use fork\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
-use fork\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
-use fork\IbexaThemeTranslationsBundle\Form\Type\TranslationFilterType;
-use fork\IbexaThemeTranslationsBundle\Form\Type\TranslationsImportType;
-use fork\IbexaThemeTranslationsBundle\Form\Type\TranslationType;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationDraftRepository;
-use fork\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
-use fork\IbexaThemeTranslationsBundle\Service\DeeplTranslationService;
-use fork\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
 use Ibexa\Contracts\AdminUi\Controller\Controller;
 use Ibexa\Contracts\Core\Repository\LanguageService;
 use League\Csv\Reader;
@@ -28,6 +18,16 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
+use vardumper\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
+use vardumper\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
+use vardumper\IbexaThemeTranslationsBundle\Form\Type\TranslationFilterType;
+use vardumper\IbexaThemeTranslationsBundle\Form\Type\TranslationsImportType;
+use vardumper\IbexaThemeTranslationsBundle\Form\Type\TranslationType;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationDraftRepository;
+use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
+use vardumper\IbexaThemeTranslationsBundle\Service\DeeplTranslationService;
+use vardumper\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
 
 final class TranslationsController extends Controller
 {

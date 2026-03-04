@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Entity\Translation;
-use fork\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
+use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
+use vardumper\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
 
 uses(PHPUnit\Framework\TestCase::class);
 

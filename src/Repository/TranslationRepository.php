@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Repository;
+namespace vardumper\IbexaThemeTranslationsBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
-use fork\IbexaThemeTranslationsBundle\Entity\Translation;
+use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
 
 /**
  * @extends ServiceEntityRepository<Translation>
@@ -124,7 +124,7 @@ class TranslationRepository extends ServiceEntityRepository
         } elseif ($status === 'done') {
             $qb->andWhere("t.translation != '' AND t.translation IS NOT NULL");
         } elseif ($status === 'pending') {
-            $draftClass = 'fork\\IbexaThemeTranslationsBundle\\Entity\\TranslationDraft';
+            $draftClass = 'vardumper\\IbexaThemeTranslationsBundle\\Entity\\TranslationDraft';
             $qb->andWhere(
                 $qb->expr()->exists(
                     "SELECT d.id FROM {$draftClass} d WHERE d.transKey = t.transKey AND d.languageCode = t.languageCode"

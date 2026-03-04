@@ -32,7 +32,7 @@ The bundle should be registered automatically - if not, activate it in `config/b
 ```php
 return [
     // ...
-    fork\IbexaThemeTranslationsBundle\IbexaThemeTranslationsBundle::class => ['all' => true],
+    vardumper\IbexaThemeTranslationsBundle\IbexaThemeTranslationsBundle::class => ['all' => true],
 ];
 ```
 

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Repository;
+namespace vardumper\IbexaThemeTranslationsBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use fork\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
+use vardumper\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
 
 /**
  * @extends ServiceEntityRepository<TranslationDraft>

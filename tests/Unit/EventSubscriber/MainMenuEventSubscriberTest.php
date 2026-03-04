@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\EventSubscriber\MainMenuEventSubscriber;
 use Ibexa\AdminUi\Menu\Event\ConfigureMenuEvent;
 use Ibexa\AdminUi\Menu\MenuItemFactory;
 use Ibexa\Contracts\Core\Repository\PermissionResolver;
 use Knp\Menu\FactoryInterface;
 use Knp\Menu\ItemInterface;
+use vardumper\IbexaThemeTranslationsBundle\EventSubscriber\MainMenuEventSubscriber;
 
 uses(PHPUnit\Framework\TestCase::class);
 

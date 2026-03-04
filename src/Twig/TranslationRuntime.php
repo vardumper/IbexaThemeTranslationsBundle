@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace fork\IbexaThemeTranslationsBundle\Twig;
+namespace vardumper\IbexaThemeTranslationsBundle\Twig;
 
-use fork\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
-use fork\IbexaThemeTranslationsBundle\Service\TranslationServiceInterface;
 use Twig\Extension\RuntimeExtensionInterface;
+use vardumper\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
+use vardumper\IbexaThemeTranslationsBundle\Service\TranslationServiceInterface;
 
 final class TranslationRuntime implements RuntimeExtensionInterface
 {

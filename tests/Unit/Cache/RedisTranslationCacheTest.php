@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use vardumper\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache;
 
 uses(PHPUnit\Framework\TestCase::class);
 

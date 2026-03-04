@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Client\Deepl;
 use Ibexa\Contracts\AutomatedTranslation\Exception\ClientNotConfiguredException;
+use vardumper\IbexaThemeTranslationsBundle\Client\Deepl;
 
 uses(PHPUnit\Framework\TestCase::class);
 

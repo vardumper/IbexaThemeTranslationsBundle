@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use fork\IbexaThemeTranslationsBundle\Twig\TranslationExtension;
 use Twig\TwigFilter;
+use vardumper\IbexaThemeTranslationsBundle\Twig\TranslationExtension;
 
 uses(PHPUnit\Framework\TestCase::class);
 
