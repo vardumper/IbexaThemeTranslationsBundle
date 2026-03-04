@@ -102,13 +102,3 @@ services:
     vardumper\IbexaThemeTranslationsBundle\EventListener\TranslationCacheInvalidationListener:
         tags:
             - { name: doctrine.orm.entity_listener, entity_manager: default }
-
-doctrine:
-    orm:
-        mappings:
-            IbexaThemeTranslationsBundle:
-                type: attribute
-                is_bundle: false
-                dir: '%kernel.project_dir%/vendor/vardumper/ibexa-theme-translations-bundle/src/Entity'
-                prefix: 'vardumper\IbexaThemeTranslationsBundle\Entity'
-                alias: IbexaThemeTranslations
