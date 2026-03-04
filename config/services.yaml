@@ -83,9 +83,7 @@ services:
 
     # Controller
     vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController:
-        calls:
-            - [setContainer, ['@service_container']]
-
+  
     # FieldType Registration
     vardumper\IbexaThemeTranslationsBundle\FieldType\Translation\Type:
         tags:
