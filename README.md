@@ -36,25 +36,16 @@ return [
 ];
 ```
 
-## Testing (TBD)
+## Run Tests
+This library is fully unit tested with PEST. You can run the tests by executing the following commands in the root directory of the project.
 
-This bundle uses [Pest](https://pestphp.com/) for testing.
-
-### Running Tests (TBD)
-
-First, install the development dependencies:
-
-```bash
-composer install --dev
+### Unit Tests
+```
+vendor/bin/pest
 ```
 
-Then run the tests:
-
-```bash
-./vendor/bin/pest
+### Coverage Report
+You can also generate a coverage report by running the following command.
 ```
-
-### Test Structure (TBD)
-
-## Roadmap (TBD)
-
+XDEBUG_MODE=coverage vendor/bin/pest --coverage-html=coverage-report
+```
