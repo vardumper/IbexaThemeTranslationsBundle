@@ -57,6 +57,11 @@ ibexa_theme_translations:
     resource: '@IbexaThemeTranslationsBundle/config/routes.yaml'
 ```
 
+### 5. Update DB Schema
+```bash
+bin/console doctrine:schema:update --em=default --force
+```
+
 ## Run Tests
 This library is fully unit tested with PEST. You can run the tests by executing the following commands in the root directory of the project.
 
