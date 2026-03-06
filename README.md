@@ -5,11 +5,6 @@
         <img src="https://vardumper.github.io/extended-htmldocument/logo-ibexa.svg" style="display:block; height:75px; width:auto; max-width:300px;" alt="Ibexa Logo" />
       </a>
     </td>
-    <td align="center" valign="middle" style="padding:0 1rem; border:none !important;">
-      <a href="https://www.php.net/manual/de/class.dom-htmldocument.php" target="_blank">
-        <img src="https://vardumper.github.io/extended-htmldocument/data-migration.png" style="display:block; height:95px; width:auto; max-width:220px;" alt="Database Migrations Icon" />
-      </a>
-    </td>
   </tr>
 </table>
 <h1 align="center">IbexaThemeTranslationsBundle</h1>
