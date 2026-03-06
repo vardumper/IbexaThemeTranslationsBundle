@@ -1,7 +1,7 @@
 name: Code Coverage
 on:
     push:
-    # only trigger if theres a change in src/ directory
+        # only trigger if theres a change in src/ directory
         paths:
             - '.github/workflows/code-coverage.yml'
             - 'clover.xml'
