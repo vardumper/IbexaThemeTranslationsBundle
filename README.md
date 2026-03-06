@@ -1,5 +1,7 @@
 # IbexaThemeTranslationsBundle
 
+<img src="https://raw.githubusercontent.com/vardumper/IbexaThemeTranslationsBundle/refs/heads/main/coverage.svg?token=GHSAT0AAAAAADWA6PXLCAP52XDNW25SG67G2NKU3HA" alt="Code Coverage" />
+
 This is a bundle for Ibexa DXP. It allows managing string translations for use in themes outside Ibexa's regular content object and translation logic.
 While there are a couple of i18n concepts pre-included with Ibexa, they lack a user interface. So here's a simple Doctrine ORM based approach with a UI, string search, Deepl intehration, and very basic approval flow for translation editors.
 
