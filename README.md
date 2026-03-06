@@ -22,12 +22,23 @@ While there are a couple of i18n concepts pre-included with Ibexa, they lack a u
 
 ### 1. Install the bundle
 
+If your project uses [Symfony Flex](https://symfony.com/doc/current/setup/flex.html) (recommended), the bundle, its configuration, and routes are registered automatically:
+
 ```bash
 composer require vardumper/ibexa-theme-translations-bundle
 ```
 
-### 2. Register the bundle in your `config/bundles.php`:
-The bundle should be registered automatically - if not, activate it in `config/bundles.php`:
+### 2. Update DB Schema
+```bash
+bin/console doctrine:schema:update --em=default --force
+```
+
+---
+
+<details>
+<summary>Manual installation (without Symfony Flex)</summary>
+
+### Register the bundle in your `config/bundles.php`:
 
 ```php
 return [
@@ -36,9 +47,9 @@ return [
 ];
 ```
 
-### 3. Register Entities
+### Register Entities
 ```yaml
-# config/packages/doctrine.yaml
+# config/packages/ibexa_theme_translations.yaml
 doctrine:
     orm:
         mappings:
@@ -50,17 +61,19 @@ doctrine:
                 alias: IbexaThemeTranslations
 ```
 
-### 4. Register Routes
+### Register Routes
 ```yaml
 # config/routes/ibexa_theme_translations.yaml
 ibexa_theme_translations:
     resource: '@IbexaThemeTranslationsBundle/config/routes.yaml'
 ```
 
-### 5. Update DB Schema
+### Update DB Schema
 ```bash
 bin/console doctrine:schema:update --em=default --force
 ```
+
+</details>
 
 ## Run Tests
 This library is fully unit tested with PEST. You can run the tests by executing the following commands in the root directory of the project.
