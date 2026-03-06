@@ -1,6 +1,25 @@
-# IbexaThemeTranslationsBundle
+<table align="center" style="border-collapse:collapse !important; border:none !important;">
+  <tr style="border:0px none; border-top: 0px none !important;">
+    <td align="center" valign="middle" style="padding:0 1rem; border:none !important;">
+      <a href="https://ibexa.co" target="_blank">
+        <img src="https://vardumper.github.io/extended-htmldocument/logo-ibexa.svg" style="display:block; height:75px; width:auto; max-width:300px;" alt="Ibexa Logo" />
+      </a>
+    </td>
+    <td align="center" valign="middle" style="padding:0 1rem; border:none !important;">
+      <a href="https://www.php.net/manual/de/class.dom-htmldocument.php" target="_blank">
+        <img src="https://vardumper.github.io/extended-htmldocument/data-migration.png" style="display:block; height:95px; width:auto; max-width:220px;" alt="Database Migrations Icon" />
+      </a>
+    </td>
+  </tr>
+</table>
+<h1 align="center">IbexaThemeTranslationsBundle</h1>
 
-<img src="https://raw.githubusercontent.com/vardumper/IbexaThemeTranslationsBundle/refs/heads/main/coverage.svg?token=GHSAT0AAAAAADWA6PXLCAP52XDNW25SG67G2NKU3HA" alt="Code Coverage" />
+<p align="center" dir="auto">
+    <a href="https://packagist.org/packages/vardumper/ibexa-theme-translations-bundle" rel="nofollow">
+        <img src="https://poser.pugx.org/vardumper/ibexa-theme-translations-bundle/v/stable" />
+    </a>
+    <img src="https://raw.githubusercontent.com/vardumper/IbexaThemeTranslationsBundle/refs/heads/main/coverage.svg" alt="Code Coverage" />
+</p>
 
 This is a bundle for Ibexa DXP. It allows managing string translations for use in themes outside Ibexa's regular content object and translation logic.
 While there are a couple of i18n concepts pre-included with Ibexa, they lack a user interface. So here's a simple Doctrine ORM based approach with a UI, string search, Deepl intehration, and very basic approval flow for translation editors.
