@@ -23,7 +23,7 @@ While there are a couple of i18n concepts pre-included with Ibexa, they lack a u
 
 ## Requirements
 * Ibexa DXP >= v5.0
-* Ibexa DXP >= v4.4 (untested)
+* Ibexa DXP >= v4.4
 * Ibexa Automated Translations installed, activated and configured [ibexa/automated-translation](https://packagist.org/packages/ibexa/automated-translation) if you want to use Deepl Translations
 
 ## Features
