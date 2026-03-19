@@ -127,3 +127,19 @@ it('invalidateAll is a no-op when the cache dir does not exist', function () {
 
     expect(true)->toBeTrue();
 });
+
+it('loads from disk when in-memory cache is cold (covers the require-file branch)', function () {
+    $dir = sys_get_temp_dir() . '/static_trans_disk_' . uniqid('', true);
+    $warm = new StaticArrayTranslationCache($dir);
+    $warm->warmLanguage('eng-GB', ['disk' => 'FromDisk']);
+
+    // Fresh instance — no in-memory state — forces file read
+    $cold = new StaticArrayTranslationCache($dir);
+    expect($cold->get('eng-GB', 'disk'))->toBe('FromDisk');
+
+    // Cleanup
+    foreach (glob($dir . '/*.php') ?: [] as $f) {
+        @unlink($f);
+    }
+    @rmdir($dir);
+});

@@ -71,3 +71,43 @@ function testMock(string $class): PHPUnit\Framework\MockObject\MockObject
     }
     return $factory->mock($class);
 }
+/**
+ * Bootstrap a fresh in-memory SQLite EntityManager (with schema) for each call.
+ * Fast enough for unit tests since SQLite in-memory creation is ~<5 ms.
+ */
+function sqliteEm(): Doctrine\ORM\EntityManagerInterface
+{
+    $config = Doctrine\ORM\ORMSetup::createAttributeMetadataConfiguration(
+        [__DIR__ . '/../src/Entity/'],
+        true,
+        sys_get_temp_dir() . '/doctrine_proxies',
+    );
+    $config->setNamingStrategy(new Doctrine\ORM\Mapping\UnderscoreNamingStrategy());
+
+    $connection = Doctrine\DBAL\DriverManager::getConnection([
+        'driver' => 'pdo_sqlite',
+        'memory' => true,
+    ]);
+
+    $em = new Doctrine\ORM\EntityManager($connection, $config);
+
+    $schemaTool = new Doctrine\ORM\Tools\SchemaTool($em);
+    $schemaTool->createSchema([
+        $em->getClassMetadata(vardumper\IbexaThemeTranslationsBundle\Entity\Translation::class),
+        $em->getClassMetadata(vardumper\IbexaThemeTranslationsBundle\Entity\TranslationDraft::class),
+    ]);
+
+    return $em;
+}
+
+/**
+ * Create a concrete repository backed by a real SQLite EntityManager.
+ * $repoClass must extend ServiceEntityRepository.
+ */
+function sqliteRepo(string $repoClass, Doctrine\ORM\EntityManagerInterface $em): object
+{
+    $registry = testMock(Doctrine\Persistence\ManagerRegistry::class);
+    $registry->method('getManagerForClass')->willReturn($em);
+
+    return new $repoClass($registry);
+}
