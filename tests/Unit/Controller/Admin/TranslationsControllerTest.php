@@ -7,12 +7,16 @@ use Ibexa\AutomatedTranslation\ClientProvider;
 use Ibexa\Contracts\AutomatedTranslation\Client\ClientInterface;
 use Ibexa\Contracts\Core\Repository\LanguageService;
 use Ibexa\Core\MVC\Symfony\Locale\LocaleConverterInterface;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController;
 use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
 use vardumper\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
+use vardumper\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
 use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationDraftRepository;
 use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 use vardumper\IbexaThemeTranslationsBundle\Service\DeeplTranslationService;
@@ -73,6 +77,158 @@ it('editAction returns 404 when id is null', function () {
 
     expect($response->getStatusCode())->toBe(404);
     expect($response->getContent())->toContain('No id provided');
+});
+
+it('listAction executes filtering/pagination flow then fails on render without container', function () {
+    $form = $this->createMock(FormInterface::class);
+    $form->method('createView')->willReturn(new FormView());
+
+    $formFactory = $this->createMock(FormFactoryInterface::class);
+    $formFactory->method('createNamed')->willReturn($form);
+
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->method('findByFilter')->willReturn([
+        new Translation('eng-GB', 'hello.key', 'Hello'),
+        new Translation('deu-DE', 'hello.key', 'Hallo'),
+    ]);
+
+    $draftRepo = $this->createMock(TranslationDraftRepository::class);
+    $draftRepo->method('findIndexedByTransKey')->willReturn([]);
+
+    $languageService = $this->createMock(LanguageService::class);
+    $languageService->method('loadLanguages')->willReturn([
+        new class() {
+            public string $languageCode = 'eng-GB';
+            public bool $enabled = true;
+        },
+        new class() {
+            public string $languageCode = 'deu-DE';
+            public bool $enabled = true;
+        },
+    ]);
+
+    $controller = makeController(
+        repo: $repo,
+        draftRepo: $draftRepo,
+        formFactory: $formFactory,
+        languageService: $languageService,
+        deepl: deeplConfigured(),
+    );
+
+    expect(fn () => $controller->listAction(Request::create('/'), 1))->toThrow(Error::class);
+});
+
+it('createAction persists valid form data and then fails on redirect without container', function () {
+    $value = new Value();
+    $value->setLanguageCode('eng-GB');
+    $value->setTransKey('create.key');
+    $value->setTranslation('Created');
+
+    $form = $this->createMock(FormInterface::class);
+    $form->method('add')->willReturnSelf();
+    $form->method('handleRequest')->willReturnSelf();
+    $form->method('isSubmitted')->willReturn(true);
+    $form->method('isValid')->willReturn(true);
+    $form->method('getData')->willReturn($value);
+
+    $formFactory = $this->createMock(FormFactoryInterface::class);
+    $formFactory->method('createNamed')->willReturn($form);
+
+    $em = $this->createMock(EntityManagerInterface::class);
+    $em->expects($this->once())->method('persist');
+    $em->expects($this->once())->method('flush');
+    $em->expects($this->once())->method('clear');
+
+    $controller = makeController(formFactory: $formFactory, em: $em, deepl: deeplNotConfigured());
+
+    expect(fn () => $controller->createAction(Request::create('/', 'POST')))->toThrow(Error::class);
+});
+
+it('editAction GET populates form data and then fails on render without container', function () {
+    $translation = new Translation('eng-GB', 'edit.key', 'Edit me');
+
+    $form = $this->createMock(FormInterface::class);
+    $form->method('add')->willReturnSelf();
+    $form->method('setData')->willReturnSelf();
+    $form->method('createView')->willReturn(new FormView());
+
+    $formFactory = $this->createMock(FormFactoryInterface::class);
+    $formFactory->method('createNamed')->willReturn($form);
+
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->method('find')->with(10)->willReturn($translation);
+
+    $draftRepo = $this->createMock(TranslationDraftRepository::class);
+    $draftRepo->method('findOneByKeyAndLanguage')->willReturn(null);
+
+    $controller = makeController(repo: $repo, draftRepo: $draftRepo, formFactory: $formFactory, deepl: deeplConfigured());
+
+    expect(fn () => $controller->editAction(Request::create('/', 'GET'), 10))->toThrow(Error::class);
+});
+
+it('editAction POST valid persists changes and then fails on redirect without container', function () {
+    $translation = new Translation('eng-GB', 'edit.post.key', 'Old');
+    $value = new Value();
+    $value->setLanguageCode('eng-GB');
+    $value->setTransKey('edit.post.key');
+    $value->setTranslation('New');
+
+    $form = $this->createMock(FormInterface::class);
+    $form->method('add')->willReturnSelf();
+    $form->method('handleRequest')->willReturnSelf();
+    $form->method('isSubmitted')->willReturn(true);
+    $form->method('isValid')->willReturn(true);
+    $form->method('getData')->willReturn($value);
+
+    $formFactory = $this->createMock(FormFactoryInterface::class);
+    $formFactory->method('createNamed')->willReturn($form);
+
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->method('find')->with(11)->willReturn($translation);
+
+    $em = $this->createMock(EntityManagerInterface::class);
+    $em->expects($this->once())->method('persist')->with($translation);
+    $em->expects($this->once())->method('flush');
+    $em->expects($this->once())->method('clear');
+
+    $controller = makeController(repo: $repo, formFactory: $formFactory, em: $em);
+
+    expect(fn () => $controller->editAction(Request::create('/', 'POST'), 11))->toThrow(Error::class);
+    expect($translation->getTranslation())->toBe('New');
+});
+
+it('importAction merge mode updates existing records and then fails on redirect without container', function () {
+    $tmp = tempnam(sys_get_temp_dir(), 'tt_csv_');
+    file_put_contents($tmp, "id;transKey;languageCode;translation\n1;import.key;eng-GB;Updated\n2;import.key;eng-GB;UpdatedAgain\n");
+    $uploaded = new UploadedFile($tmp, 'translations.csv', null, null, true);
+
+    $csvField = $this->createMock(FormInterface::class);
+    $csvField->method('getData')->willReturn($uploaded);
+
+    $form = $this->createMock(FormInterface::class);
+    $form->method('handleRequest')->willReturnSelf();
+    $form->method('isSubmitted')->willReturn(true);
+    $form->method('isValid')->willReturn(true);
+    $form->method('getData')->willReturn(['mode' => 'merge']);
+    $form->method('get')->with('csv')->willReturn($csvField);
+
+    $formFactory = $this->createMock(FormFactoryInterface::class);
+    $formFactory->method('createNamed')->willReturn($form);
+
+    $existing = new Translation('eng-GB', 'import.key', 'Old');
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->method('findOneBy')->willReturn($existing);
+
+    $em = $this->createMock(EntityManagerInterface::class);
+    $em->expects($this->exactly(2))->method('persist')->with($existing);
+    $em->expects($this->once())->method('flush');
+    $em->expects($this->once())->method('clear');
+
+    $controller = makeController(repo: $repo, formFactory: $formFactory, em: $em);
+
+    expect(fn () => $controller->importAction(Request::create('/', 'POST')))->toThrow(Error::class);
+    expect($existing->getTranslation())->toBe('UpdatedAgain');
+    expect(file_exists($tmp))->toBeFalse();
 });
 
 // ─── deleteAction ─────────────────────────────────────────────────────────────
