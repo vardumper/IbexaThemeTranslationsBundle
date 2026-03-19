@@ -53,3 +53,21 @@ function something()
 {
     // ..
 }
+
+/**
+ * Create a PHPUnit mock from global scope.
+ * createMock() is final+protected in TestCase, so we expose it via a public wrapper.
+ */
+function testMock(string $class): PHPUnit\Framework\MockObject\MockObject
+{
+    static $factory;
+    if ($factory === null) {
+        $factory = new class('test') extends PHPUnit\Framework\TestCase {
+            public function mock(string $class): PHPUnit\Framework\MockObject\MockObject
+            {
+                return $this->createMock($class);
+            }
+        };
+    }
+    return $factory->mock($class);
+}
