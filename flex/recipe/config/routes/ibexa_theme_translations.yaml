@@ -1,0 +1,2 @@
+ibexa_theme_translations:
+    resource: '@IbexaThemeTranslationsBundle/config/routes.yaml'
