@@ -44,9 +44,12 @@ If your project uses [Symfony Flex](https://symfony.com/doc/current/setup/flex.h
 composer require vardumper/ibexa-theme-translations-bundle
 ```
 
-### 2. Update DB Schema
+### 2. Run Migrations
+
+A migration file is automatically copied into your app's `migrations/` directory by the Flex recipe. Run it to create the required database tables:
+
 ```bash
-bin/console doctrine:schema:update --em=default --force
+bin/console doctrine:migrations:migrate
 ```
 
 ---
@@ -84,9 +87,9 @@ ibexa_theme_translations:
     resource: '@IbexaThemeTranslationsBundle/config/routes.yaml'
 ```
 
-### Update DB Schema
+### Run Migrations
 ```bash
-bin/console doctrine:schema:update --em=default --force
+bin/console doctrine:migrations:migrate
 ```
 
 </details>
