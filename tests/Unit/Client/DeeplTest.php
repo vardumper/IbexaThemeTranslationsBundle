@@ -7,6 +7,56 @@ use vardumper\IbexaThemeTranslationsBundle\Client\Deepl;
 
 uses(PHPUnit\Framework\TestCase::class);
 
+class FakeDeeplResponseBody
+{
+    public function __construct(private string $contents)
+    {
+    }
+
+    public function getContents(): string
+    {
+        return $this->contents;
+    }
+}
+
+class FakeDeeplResponse
+{
+    public function __construct(private string $text)
+    {
+    }
+
+    public function getBody(): FakeDeeplResponseBody
+    {
+        return new FakeDeeplResponseBody(json_encode([
+            'translations' => [
+                ['text' => $this->text],
+            ],
+        ]));
+    }
+}
+
+class FakeDeeplHttpClient
+{
+    public static array $lastConfig = [];
+    public static array $lastPost = [];
+    public static string $nextText = 'FAKE_TRANSLATION';
+
+    public function __construct(array $config = [])
+    {
+        self::$lastConfig = $config;
+    }
+
+    public function post(string $path, array $options = []): FakeDeeplResponse
+    {
+        self::$lastPost = [
+            'path' => $path,
+            'options' => $options,
+        ];
+
+        return new FakeDeeplResponse(self::$nextText);
+    }
+}
+
 it('getServiceAlias returns deepl', function () {
     $client = new Deepl();
 
@@ -74,4 +124,50 @@ it('constructor accepts a custom language map', function () {
     $client = new Deepl(['CUSTOM' => 'FR']);
 
     expect($client->supportsLanguage('CUSTOM'))->toBeTrue();
+});
+
+it('supportsLanguage uses the 2-letter fallback key in custom language map', function () {
+    $client = new Deepl(['EN' => 'EN-US']);
+
+    expect($client->supportsLanguage('en-AU'))->toBeTrue();
+});
+
+it('translate uses the free API endpoint when auth key ends with :fx', function () {
+    FakeDeeplHttpClient::$nextText = 'Hallo';
+    FakeDeeplHttpClient::$lastConfig = [];
+    FakeDeeplHttpClient::$lastPost = [];
+
+    $client = new Deepl([], static fn (array $config) => new FakeDeeplHttpClient($config));
+    $client->setConfiguration(['authKey' => 'test-key:fx']);
+    $translated = $client->translate('<deepl>Hello</deepl>', 'EN-GB', 'DE');
+
+    expect($translated)->toBe('Hallo');
+    expect(FakeDeeplHttpClient::$lastConfig['base_uri'])->toBe('https://api-free.deepl.com');
+    expect(FakeDeeplHttpClient::$lastConfig['headers']['Authorization'])->toBe('DeepL-Auth-Key test-key:fx');
+    expect(FakeDeeplHttpClient::$lastPost['path'])->toBe('/v2/translate');
+    expect(FakeDeeplHttpClient::$lastPost['options']['form_params']['target_lang'])->toBe('DE');
+    expect(FakeDeeplHttpClient::$lastPost['options']['form_params']['source_lang'])->toBe('EN');
+});
+
+it('translate uses the pro API endpoint when auth key has no :fx suffix', function () {
+    FakeDeeplHttpClient::$nextText = 'Hello';
+    FakeDeeplHttpClient::$lastConfig = [];
+    FakeDeeplHttpClient::$lastPost = [];
+
+    $client = new Deepl([], static fn (array $config) => new FakeDeeplHttpClient($config));
+    $client->setConfiguration(['authKey' => 'pro-key']);
+    $translated = $client->translate('<deepl>Hallo</deepl>', null, 'EN-GB');
+
+    expect($translated)->toBe('Hello');
+    expect(FakeDeeplHttpClient::$lastConfig['base_uri'])->toBe('https://api.deepl.com');
+    expect(FakeDeeplHttpClient::$lastPost['options']['form_params']['target_lang'])->toBe('EN-GB');
+    expect(array_key_exists('source_lang', FakeDeeplHttpClient::$lastPost['options']['form_params']))->toBeFalse();
+});
+
+it('translate throws when target language code is invalid', function () {
+    $client = new Deepl([], static fn (array $config) => new FakeDeeplHttpClient($config));
+    $client->setConfiguration(['authKey' => 'test-key:fx']);
+
+    expect(fn () => $client->translate('Hello', 'EN', 'INVALID_XX'))
+        ->toThrow(Ibexa\AutomatedTranslation\Exception\InvalidLanguageCodeException::class);
 });

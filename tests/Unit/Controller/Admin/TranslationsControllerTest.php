@@ -85,6 +85,23 @@ it('deleteAction returns 404 when id is null', function () {
     expect($response->getContent())->toContain('No id provided');
 });
 
+it('deleteAction removes entity and then attempts redirect', function () {
+    $entity = new Translation('eng-GB', 'delete.key', 'To delete');
+
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->method('find')->with(1)->willReturn($entity);
+
+    $em = $this->createMock(EntityManagerInterface::class);
+    $em->expects($this->once())->method('remove')->with($entity);
+    $em->expects($this->once())->method('flush');
+    $em->expects($this->once())->method('clear');
+
+    $controller = makeController(repo: $repo, em: $em);
+
+    // Redirect generation needs framework services that are not booted in this unit test.
+    expect(fn () => $controller->deleteAction(1))->toThrow(Error::class);
+});
+
 // ─── deeplTranslateAction ────────────────────────────────────────────────────
 
 it('deeplTranslateAction returns 503 when DeepL is not configured', function () {

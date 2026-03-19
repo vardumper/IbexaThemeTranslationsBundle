@@ -56,9 +56,15 @@ final class Deepl implements ClientInterface
      */
     private array $languageMap;
 
-    public function __construct(array $languageMap = [])
+    /**
+     * @var null|callable(array): object
+     */
+    private $httpClientFactory;
+
+    public function __construct(array $languageMap = [], ?callable $httpClientFactory = null)
     {
         $this->languageMap = $languageMap ?: self::DEFAULT_LANGUAGE_MAP;
+        $this->httpClientFactory = $httpClientFactory;
     }
 
     public function getServiceAlias(): string
@@ -93,13 +99,17 @@ final class Deepl implements ClientInterface
             $parameters['source_lang'] = substr($this->normalized($from), 0, 2);
         }
 
-        $http = new Client([
+        $clientConfig = [
             'base_uri' => $baseUri,
             'timeout' => 5.0,
             'headers' => [
                 'Authorization' => 'DeepL-Auth-Key ' . $this->authKey,
             ],
-        ]);
+        ];
+
+        $http = $this->httpClientFactory !== null
+            ? ($this->httpClientFactory)($clientConfig)
+            : new Client($clientConfig);
 
         $response = $http->post('/v2/translate', [
             'form_params' => $parameters,
