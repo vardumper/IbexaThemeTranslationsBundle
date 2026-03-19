@@ -13,7 +13,7 @@
     <a href="https://packagist.org/packages/vardumper/ibexa-theme-translations-bundle" rel="nofollow">
         <img src="https://poser.pugx.org/vardumper/ibexa-theme-translations-bundle/v/stable" />
     </a>
-    ![Packagist Downloads](https://img.shields.io/packagist/dt/vardumper/IbexaThemeTranslationsBundle)
+    <img src="https://img.shields.io/packagist/dt/vardumper/IbexaThemeTranslationsBundle" />
     <img src="https://raw.githubusercontent.com/vardumper/IbexaThemeTranslationsBundle/refs/heads/main/coverage.svg" alt="Code Coverage" />
 </p>
 
