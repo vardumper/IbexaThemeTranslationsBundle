@@ -38,7 +38,8 @@
         "pestphp/pest": ">=4.4.1",
         "ibexa/automated-translation": "^4.4|^5.0.5",
         "guzzlehttp/guzzle": "^7.10",
-        "doctrine/doctrine-fixtures-bundle": "^3.5|^4.3.1"
+        "doctrine/doctrine-fixtures-bundle": "^3.5|^4.3.1",
+        "phpmd/phpmd": "^2.15"
     },
     "autoload": {
         "psr-4": {
