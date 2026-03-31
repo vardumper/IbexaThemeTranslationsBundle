@@ -10,7 +10,7 @@
 <h1 align="center">IbexaThemeTranslationsBundle</h1>
 
 <p align="center" dir="auto">
-    <img src="https://dtrack.erikpoehler.us/api/v1/badge/vulns/project/f5ab51a9-61f9-49e9-8e87-c53225e547ee?apiKey=odt_nG83W_EAcQZkk6b5KqknIVoK8nfNjSz38Ompn">
+    <img src="https://dtrack.erikpoehler.us/api/v1/badge/vulns/project/f5ab51a9-61f9-49e9-8e87-c53225e547ee?apiKey=odt_nG83W_EAcQZkk6b5KqknIVoK8nfNjSz38Ompnn">
     <a href="https://packagist.org/packages/vardumper/ibexa-theme-translations-bundle" rel="nofollow">
         <img src="https://poser.pugx.org/vardumper/ibexa-theme-translations-bundle/v/stable" />
     </a>
