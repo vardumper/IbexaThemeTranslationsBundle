@@ -167,7 +167,7 @@ fi
 
 # you should still be able to commit if there are CVE vulnerabilities - information only
 printf "${YELLOW}Composer Audit${NC}\n"
-RUN composer audit
+RUN composer audit --abandoned=report --no-dev
 ret_code=$?
 if [[ $ret_code == 0 ]]; then
     printf "${GREEN}Composer audit passed${NC}\n"
