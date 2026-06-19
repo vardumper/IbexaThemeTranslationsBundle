@@ -65,9 +65,15 @@ final class TranslationsController extends Controller
             $sortDir,
         );
 
+        $currentPage = filter_var(
+            $page,
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1]]
+        ) ?: 1;
+
         $paginator = new Pagerfanta(new ArrayAdapter($all));
         $paginator->setMaxPerPage((int)($vals['perPage'] ?? 25));
-        $paginator->setCurrentPage($page);
+        $paginator->setCurrentPage($currentPage);
 
         $pageResults = iterator_to_array($paginator->getCurrentPageResults());
         $transKeys = array_unique(array_map(fn (Translation $t) => $t->getTransKey(), $pageResults));

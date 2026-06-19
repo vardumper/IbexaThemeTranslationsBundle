@@ -7,12 +7,12 @@ use Ibexa\AutomatedTranslation\ClientProvider;
 use Ibexa\Contracts\AutomatedTranslation\Client\ClientInterface;
 use Ibexa\Contracts\Core\Repository\LanguageService;
 use Ibexa\Core\MVC\Symfony\Locale\LocaleConverterInterface;
+use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
-use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController;
 use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
 use vardumper\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
@@ -116,6 +116,46 @@ it('listAction executes filtering/pagination flow then fails on render without c
     );
 
     expect(fn () => $controller->listAction(Request::create('/'), 1))->toThrow(Error::class);
+});
+
+it('listAction accepts numeric string page and does not fail with TypeError', function () {
+    $form = $this->createMock(FormInterface::class);
+    $form->method('createView')->willReturn(new FormView());
+
+    $formFactory = $this->createMock(FormFactoryInterface::class);
+    $formFactory->method('createNamed')->willReturn($form);
+
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->method('findByFilter')->willReturn([
+        new Translation('eng-GB', 'hello.key', 'Hello'),
+    ]);
+
+    $draftRepo = $this->createMock(TranslationDraftRepository::class);
+    $draftRepo->method('findIndexedByTransKey')->willReturn([]);
+
+    $languageService = $this->createMock(LanguageService::class);
+    $languageService->method('loadLanguages')->willReturn([
+        new class() {
+            public string $languageCode = 'eng-GB';
+            public bool $enabled = true;
+        },
+    ]);
+
+    $controller = makeController(
+        repo: $repo,
+        draftRepo: $draftRepo,
+        formFactory: $formFactory,
+        languageService: $languageService,
+        deepl: deeplConfigured(),
+    );
+
+    try {
+        $controller->listAction(Request::create('/'), '1');
+        expect(true)->toBeTrue();
+    } catch (\Throwable $e) {
+        expect($e)->toBeInstanceOf(Error::class);
+        expect($e)->not->toBeInstanceOf(TypeError::class);
+    }
 });
 
 it('createAction persists valid form data and then fails on redirect without container', function () {
