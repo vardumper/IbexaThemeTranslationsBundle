@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1781886323">
-  <project timestamp="1781886323" name="Clover Coverage">
+<coverage generated="1783933472">
+  <project timestamp="1783933472" name="Clover Coverage">
     <package name="vardumper\IbexaThemeTranslationsBundle\Cache">
       <file name="/home/erik-poehler/Sites/IbexaThemeTranslationsBundle/src/Cache/PublicTranslationsCache.php">
         <class name="vardumper\IbexaThemeTranslationsBundle\Cache\PublicTranslationsCache" namespace="vardumper\IbexaThemeTranslationsBundle\Cache">
