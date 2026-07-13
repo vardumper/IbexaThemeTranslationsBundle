@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:099e1bf5-41ba-4f7b-ad5b-94a0aac70e83",
+  "serialNumber": "urn:uuid:4d79c4fd-cc47-48a7-9d89-7089a7cf4fb2",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-06-26T00:06:26+00:00",
+    "timestamp": "2026-07-13T09:10:04+00:00",
     "tools": {
       "components": [
         {
@@ -20,7 +20,7 @@
       ]
     },
     "component": {
-      "bom-ref": "b3fa9b3a-b240-47bc-9074-5735909700ff",
+      "bom-ref": "ba6ce631-be0e-47cb-89f6-b0b5b171f5fd",
       "type": "application",
       "name": ".",
       "properties": [
@@ -33,7 +33,7 @@
   },
   "components": [
     {
-      "bom-ref": "7c6b9ac5-07f2-476a-bfce-fd8f3dc2de6b",
+      "bom-ref": "669fceee-648b-4555-a4ac-d689bda81e9d",
       "type": "application",
       "name": "composer.lock",
       "properties": [
@@ -5378,7 +5378,7 @@
   ],
   "dependencies": [
     {
-      "ref": "7c6b9ac5-07f2-476a-bfce-fd8f3dc2de6b",
+      "ref": "669fceee-648b-4555-a4ac-d689bda81e9d",
       "dependsOn": [
         "pkg:composer/brainmaestro/composer-git-hooks@dev-master",
         "pkg:composer/doctrine/doctrine-bundle@2.18.2",
@@ -5407,9 +5407,9 @@
       ]
     },
     {
-      "ref": "b3fa9b3a-b240-47bc-9074-5735909700ff",
+      "ref": "ba6ce631-be0e-47cb-89f6-b0b5b171f5fd",
       "dependsOn": [
-        "7c6b9ac5-07f2-476a-bfce-fd8f3dc2de6b"
+        "669fceee-648b-4555-a4ac-d689bda81e9d"
       ]
     },
     {
@@ -7172,7 +7172,7 @@
         693
       ],
       "description": "Twig versions 2.16.x and 3.9.0 through 3.25.x contain a sandbox bypass vulnerability when using a SourcePolicyInterface that allows attackers with template rendering capabilities to pass arbitrary PHP callables to sort, filter, map, and reduce filters. Attackers can exploit the runtime check that fails to use the current template source to bypass sandbox restrictions and execute arbitrary code when the sandbox is enabled through a source policy rather than globally.",
-      "recommendation": "Upgrade twig/twig to version 3.26.0, 3.0.0",
+      "recommendation": "Upgrade twig/twig to version 3.0.0, 3.26.0",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-24425"
@@ -7230,7 +7230,7 @@
       },
       "ratings": [],
       "description": "### Description\n\n`X509Authenticator` implements client-certificate (mTLS) authentication: the web server validates the client's certificate against a trusted CA, then passes the certificate's Subject DN (Distinguished Name: a string like `CN=Alice,O=Example,emailAddress=alice@example.com`) to Symfony via `$_SERVER['SSL_CLIENT_S_DN']`. Symfony extracts the user identifier from that string.\n\nThe extraction uses an **unanchored** regex that matches `emailAddress=` anywhere in the DN string: including inside the *value* of a different RDN (Relative Distinguished Name: one `key=value` component of the DN), such as `CN`. An attacker who can obtain a certificate from a trusted CA with a free-text `CN` can smuggle `emailAddress=victim@target` inside the CN value and be authenticated as the victim.\n\n### Resolution\n\nThe `X509Authenticator` now uses a regex that anchors the match to an RDN boundary (start of string, or following a `,` / `/` separator).\n\nThe patch for this issue is available [here](https://github.com/symfony/symfony/commit/ccb3f724c7ff55670a6fe3521c7bf1514cceb478) for branch 5.4.\n\n### Credits\n\nSymfony would like to thank Claude Mythos Preview (via Project Glasswing) for reporting the issue and providing the fix.",
-      "recommendation": "Upgrade symfony/security-http to version 5.2.0, 7.1.0, 3.0.0, 5.1.0, 5.4.0, 6.3.0, 6.4.0, 7.2.0, 7.4.0, 8.0.12, 5.3.0, 5.4.52, 6.1.0, 7.3.0, 7.4.12, 4.0.0, 5.0.0, 6.2.0, 6.4.40",
+      "recommendation": "Upgrade symfony/security-http to version 3.0.0, 5.2.0, 5.4.0, 5.4.52, 6.2.0, 7.2.0, 4.0.0, 5.3.0, 6.1.0, 7.1.0, 5.0.0, 5.1.0, 6.4.0, 8.0.12, 6.3.0, 6.4.40, 7.3.0, 7.4.0, 7.4.12",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-45063"
@@ -7281,7 +7281,7 @@
         }
       ],
       "description": "### Description\n\nSymfony routes can declare a requirements regex per path parameter, e.g. a route `/{_locale}/blog` with `requirements: { _locale: 'en|fr|de' }`. The Twig `path()` / `url()` helpers (backed by `UrlGenerator`) validate supplied parameter values against that regex before building the URL.\n\nUrlGenerator constructs the validation pattern as `'#^'.$req.'$#'`, where `$req` is the raw requirement string. For a requirement expressed as an alternation, e.g. `_locale: 'ar|bg|...|vi|...|zh_CN'` (very common), `^` and `$` anchor only the first and last alternatives, so any middle alternative matches as an unanchored substring. A value like `/evil.com` satisfies the requirement (because it contains `vi`), and the generated path becomes `//evil.com/...`: a protocol-relative URL the browser navigates off-site.\n\n### Resolution\n\nThe `UrlGenerator` class now wraps the requirement in a non-capturing group so the `^` and `$` anchors apply to the whole alternation.\n\nThe patch for this issue is available [here](https://github.com/symfony/symfony/commit/bcf487c22f3240ba994124e0e0fe8616f3cfc47a) for branch 5.4.\n\n### Credits\n\nSymfony would like to thank Claude Mythos Preview (via Project Glasswing) for reporting the issue and providing the fix.",
-      "recommendation": "Upgrade symfony/routing to version 5.0.0, 5.1.0, 6.4.40, 7.4.0, 7.4.12, 8.0.12, 5.3.0, 6.2.0, 6.3.0, 6.4.0, 7.2.0, 7.1.0, 3.0.0, 5.2.0, 5.4.0, 5.4.52, 6.1.0, 7.3.0, 4.0.0",
+      "recommendation": "Upgrade symfony/routing to version 7.4.0, 8.0.12, 5.2.0, 6.4.0, 6.4.40, 6.2.0, 7.2.0, 7.4.12, 4.0.0, 5.3.0, 5.4.52, 6.3.0, 7.3.0, 3.0.0, 5.0.0, 5.1.0, 5.4.0, 6.1.0, 7.1.0",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-45065"
@@ -7325,7 +7325,7 @@
       },
       "ratings": [],
       "description": "### Description\n\n`Symfony\\Component\\Mime\\Address` is the value-object every Symfony Mailer address (to/cc/bcc/from/reply-to) flows through; its constructor is documented as validating the address and throwing on invalid input, so developers treat it as a security boundary.\n\nThe constructor accepts email addresses whose local-part (the part before `@`) is an RFC-5322 *quoted string* containing raw `\\r\\n` bytes, e.g. `\"x\\r\\nBcc: attacker@evil\"@example.com`. The stored address is later emitted verbatim into (1) the rendered message headers and (2) `SmtpTransport`'s `MAIL FROM:<...>` / `RCPT TO:<...>` protocol lines, turning the embedded CRLF into a new mail header and/or a new SMTP command.\n\n### Resolution\n\nThe `Address` constructor now rejects addresses containing line breaks.\n\nThe patch for this issue is available [here](https://github.com/symfony/symfony/commit/dc2dbd29211eb4ddc451373fa1374fb926e94604) for branch 5.4.\n\n### Credits\n\nWe would like to thank Claude Mythos Preview (via Project Glasswing) for reporting the issue and providing the fix.",
-      "recommendation": "Upgrade symfony/mime to version 7.4.0, 4.0.0, 7.2.0, 7.4.12, 5.0.0, 5.4.0, 6.1.0, 6.2.0, 6.4.40, 8.0.12, 5.1.0, 5.2.0, 5.4.52, 6.3.0, 7.1.0, 7.3.0, 3.0.0, 5.3.0, 6.4.0",
+      "recommendation": "Upgrade symfony/mime to version 3.0.0, 5.2.0, 6.4.40, 7.3.0, 4.0.0, 5.0.0, 5.1.0, 6.1.0, 6.2.0, 7.4.12, 5.4.0, 5.4.52, 6.3.0, 6.4.0, 7.1.0, 8.0.12, 5.3.0, 7.2.0, 7.4.0",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-45067"
@@ -7369,7 +7369,7 @@
       },
       "ratings": [],
       "description": "### Description\n\nSymfony Mailer selects a transport via the `MAILER_DSN` environment variable / configuration (e.g. `smtp://...`, `sendmail://...`, `native://default`). `SendmailTransport` invokes the local `sendmail` binary and supports two modes: `-bs` (speak SMTP over stdin: the default) and `-t` (read the message on stdin, pass recipients as command-line arguments).\n\nIn `-t` mode, recipient addresses are appended to the sendmail command line **without a `--` end-of-options separator**. A recipient address beginning with `-` (which `Symfony\\Component\\Mime\\Address` accepts as valid) is therefore interpreted by sendmail as a command-line option rather than an address.\n\n### Resolution\n\nThe `SendmailTransport` transport now ensure `--` is set before the list of recipients.\n\nThe patch for this issue is available [here](https://github.com/symfony/symfony/commit/c45144862dc289d03952f41f6078174089a3afc6) for branch 5.4.\n\n### Credits\n\nSymfony would like to thank Claude Mythos Preview (via Project Glasswing) for reporting the issue and providing the fix.",
-      "recommendation": "Upgrade symfony/mailer to version 4.0.0, 5.0.0, 5.3.0, 6.3.0, 6.4.40, 3.0.0, 6.2.0, 6.4.0, 7.1.0, 7.3.0, 8.0.12, 5.1.0, 5.2.0, 5.4.52, 7.2.0, 7.4.12, 5.4.0, 6.1.0, 7.4.0",
+      "recommendation": "Upgrade symfony/mailer to version 4.0.0, 5.0.0, 5.1.0, 6.1.0, 6.3.0, 6.4.0, 8.0.12, 5.2.0, 5.4.52, 6.4.40, 7.2.0, 5.4.0, 7.4.0, 7.4.12, 5.3.0, 6.2.0, 7.1.0, 7.3.0, 3.0.0",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-45068"
@@ -7413,7 +7413,7 @@
       },
       "ratings": [],
       "description": "### Description\n\n`OidcTokenHandler` is Symfony's built-in access-token handler for OpenID Connect: it validates a bearer JWT and returns the authenticated user identity. It delegates claim validation to the `web-token/jwt-checker` library's `ClaimCheckerManager`.\n\n`OidcTokenHandler::verifyClaims()` registers audience (`aud`), issuer (`iss`), and expiry (`exp`) checkers, but never passes the `$mandatoryClaims` argument to `ClaimCheckerManager::check()`. That method only validates claims that are *present* in the token: a checker for an absent claim is silently skipped. A validly-signed JWT that simply **omits** `aud`, `iss`, and `exp` therefore passes verification.\n\n### Resolution\n\nThe `OidcTokenHandler` now calls the `ClaimCheckerManager` with the list of mandatory claims so that tokens missing `aud`, `iss`, or `exp` are rejected.\n\nThe patch for this issue is available [here](https://github.com/symfony/symfony/commit/6b717aaac21b7e96798448d14c4355ea87690b3d) for branch 6.4.\n\n### Credits\n\nSymfony would like to thank Claude Mythos Preview (via Project Glasswing) for reporting the issue and providing the fix.",
-      "recommendation": "Upgrade symfony/security-http to version 7.4.12, 8.0.12, 6.4.0, 6.4.40",
+      "recommendation": "Upgrade symfony/security-http to version 6.4.0, 6.4.40, 7.4.12, 8.0.12",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-45069"
@@ -7457,7 +7457,7 @@
       },
       "ratings": [],
       "description": "### Description\n\n`Symfony\\Component\\Mime\\Header\\ParameterizedHeader` (and the related parameter handling reachable from `Symfony\\Component\\Mime\\Header\\Headers`) is responsible for serializing structured headers such as `Content-Type` and `Content-Disposition`, which carry `key=value` parameters (e.g. `Content-Disposition: attachment; filename=\"x\"`).\n\nRFC 2045 / RFC 5322 require parameter *names* to be `tokens`: a restricted ASCII subset that excludes whitespace, CR/LF, and the `tspecials` set. Symfony's parameter handling validates and properly encodes parameter *values*, but does not validate parameter *names*: the supplied name is emitted verbatim into the serialized header.\n\nA caller that derives a parameter name from untrusted input, e.g. an application that lets a user influence a `Content-Disposition` parameter name, can include `\\r\\n` or other non-token bytes inside the name, terminating the current header and injecting additional headers in the rendered message. This is the classic CRLF / header-injection primitive applied to the parameter-name slot.\n\n### Resolution\n\n`ParameterizedHeader` now rejects parameter names that contain bytes outside the RFC `token` character class.\n\nThe patch for this issue is available [here](https://github.com/symfony/symfony/commit/e62ea217f8b4ca8ae922ad0f949e0c4dc1f9b613) for branch 5.4.\n\n### Credits\n\nSymfony would like to thank Fabian Fleischer for reporting the issue and Alexandre Daubois for fixing it.",
-      "recommendation": "Upgrade symfony/mime to version 5.2.0, 5.4.52, 6.1.0, 6.4.40, 5.3.0, 5.4.0, 7.3.0, 7.4.0, 7.4.12, 6.2.0, 6.3.0, 6.4.0, 7.1.0, 7.2.0, 8.0.12, 3.0.0, 4.0.0, 5.0.0, 5.1.0",
+      "recommendation": "Upgrade symfony/mime to version 7.1.0, 3.0.0, 4.0.0, 5.0.0, 5.2.0, 6.1.0, 6.3.0, 7.3.0, 7.4.0, 5.1.0, 5.3.0, 6.2.0, 6.4.40, 7.4.12, 8.0.12, 5.4.52, 6.4.0, 7.2.0, 5.4.0",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-45070"
@@ -7498,7 +7498,7 @@
       },
       "ratings": [],
       "description": "### Description\n\n`Symfony\\Component\\Cache\\Adapter\\PdoAdapter` is the PDO-backed cache adapter. Its `clear($prefix)` method (inherited from `AbstractAdapterTrait`) is documented to delete cache items whose key starts with `$prefix`.\n\nIn the non-versioning code path, the caller-supplied `$prefix` is concatenated into `$namespace = $this->namespace.$prefix` and passed to `PdoAdapter::doClear()`, which builds:\n\n```sql\nDELETE FROM <table> WHERE <id_col> LIKE '<namespace>%'\n```\n\nThe value is interpolated directly into the SQL text and executed with `PDO::exec()`: `$namespace` is not bound. A caller able to influence `$prefix` can break out of the literal and inject SQL, expanding deletion scope from the intended prefix to arbitrary rows, or otherwise reshape query semantics.\n\nMost applications don't expose `clear($prefix)` to untrusted input directly, but the contract of the method is to safely accept any prefix string, so the lack of escaping is a defect of the adapter itself.\n\n### Resolution\n\n`AbstractAdapterTrait::clear()` now rejects any `$prefix` containing characters outside `[-+.A-Za-z0-9]`: when an invalid prefix is supplied, the method logs a warning and returns `false` instead of reaching the SQL layer. This blocks quotes, `%`, null bytes and other characters that would let an attacker break out of the `LIKE` literal.\n\nThe patch for this issue is available [here](https://github.com/symfony/symfony/commit/ec50b799d79ebe24561f29351c1efcb6da95c9b1) for branch 5.4.\n\n### Credits\nSymfony would like to thank secsys_codex for reporting the issue and Nicolas Grekas for fixing it.",
-      "recommendation": "Upgrade symfony/cache to version 6.1.0, 6.4.0, 7.4.0, 5.2.0, 5.4.0, 6.4.40, 3.0.0, 5.1.0, 6.2.0, 6.3.0, 7.1.0, 7.3.0, 7.4.12, 5.0.0, 7.2.0, 8.0.12, 4.0.0, 5.3.0, 5.4.52",
+      "recommendation": "Upgrade symfony/cache to version 6.1.0, 6.3.0, 5.3.0, 5.4.52, 6.4.40, 7.1.0, 7.2.0, 7.4.0, 7.4.12, 3.0.0, 5.1.0, 5.4.0, 6.2.0, 6.4.0, 5.2.0, 7.3.0, 8.0.12, 4.0.0, 5.0.0",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-45073"
@@ -7725,7 +7725,7 @@
       },
       "ratings": [],
       "description": "### Description\n\nThe fix for CVE-2024-45411 / GHSA-6j75-5wfj-gh66 added an explicit `$loaded->unwrap()->checkSecurity()` call in `CoreExtension::include()` so that a template already cached in `Environment::$loadedTemplates` is re-checked when included with `sandboxed = true`.\n\nThe deprecated but still functional `{% sandbox %}{% include ... %}{% endsandbox %}` tag path was not updated: it compiles to `enableSandbox(); yield from $this->load(...)->unwrap()->yield(...); disableSandbox();` with no `checkSecurity()` re-invocation. If the included template was loaded once outside the sandbox in the same `Environment` instance, its constructor (and therefore its compiled `checkSecurity()` call) already ran while `isSandboxed()` was `false`, so the tags/filters/functions allowlist enforced by `SecurityPolicy::checkSecurity()` is never applied.\n\nAn attacker who can author the included template gains access to every filter, function and tag registered in the environment, regardless of the sandbox policy.\n\n### Resolution\n\nThe compiled output of `{% sandbox %}{% include %}` now calls `checkSecurity()` on the loaded template, matching the behaviour of `CoreExtension::include()` with `sandboxed = true`.\n\n### Credits\n\nTwig would like to thank Claude Mythos Preview (via Project Glasswing) for reporting the issue and providing the fix.",
-      "recommendation": "Upgrade twig/twig to version 3.0.0, 3.26.0, 2.0.0",
+      "recommendation": "Upgrade twig/twig to version 2.0.0, 3.0.0, 3.26.0",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-46638"
@@ -7900,7 +7900,7 @@
         }
       ],
       "description": "### Description\n\nWhen a firewall is configured with `form-login` (or any authenticator using `DefaultAuthenticationFailureHandler`) and the `failure_forward: true` option, the handler reads the `_failure_path` parameter from the failing login request and uses it as the path of an internal subrequest dispatched through `HttpKernelInterface::SUB_REQUEST`.\n\nSymfony's `Firewall::onKernelRequest` listener intentionally skips subrequests under the assumption they are internally generated and trusted, which also means `AccessListener` (the listener that evaluates `access_control`) does not run. Because the attacker controls the target of the subrequest, an unauthenticated POST to the check path with `_failure_path=/admin/whatever` performs a local request forgery that executes the target controller outside the firewall perimeter and returns its response to the caller.\n\nApplications that follow Symfony's recommended best practice of protecting administrative areas with broad `access_control` rules (e.g. `^/admin` requires `ROLE_ADMIN`) and expose read-only GET endpoints under that area (data exports, internal APIs, account views) are fully exposed: any such GET route can be read by an unauthenticated attacker without any developer misconfiguration, debug mode, or state-changing GET handler being required.\n\n### Resolution\n\n`DefaultAuthenticationFailureHandler` no longer honors the request-supplied `_failure_path` parameter when `failure_forward` is enabled. The subrequest is always dispatched to the configured `failure_path` option (defaulting to `login_path`), which is set by the application owner and not by the request. The redirect branch (`failure_forward: false`) is unchanged because redirects re-enter the firewall on the next request and are not subject to this bypass.\n\nThe patch for this issue is available [here](https://github.com/symfony/symfony/commit/c48a4276309e11aedeeb0ce3a89dfbf0b4fe04ff) for branch 5.4.\n\n### Credits\n\nSymfony would like to thank Nguyen Ngoc Toan Thang (@a-tt-om) and Tran Quoc Tri Trung (@teebow1e) for reporting the issue, and Nicolas Grekas for providing the fix.",
-      "recommendation": "Upgrade symfony/security-http to version 6.4.0, 6.4.41, 7.1.0, 7.3.0, 8.0.13, 5.2.0, 6.1.0, 7.4.13, 3.0.0, 4.0.0, 7.4.0, 5.0.0, 5.3.0, 6.2.0, 6.3.0, 7.2.0, 5.1.0, 5.4.0, 5.4.53",
+      "recommendation": "Upgrade symfony/security-http to version 6.2.0, 3.0.0, 5.0.0, 5.1.0, 6.4.0, 8.0.13, 5.3.0, 6.1.0, 7.2.0, 7.3.0, 7.4.0, 7.4.13, 7.1.0, 5.2.0, 5.4.0, 6.3.0, 6.4.41, 4.0.0, 5.4.53",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-48489"
@@ -7944,7 +7944,7 @@
       },
       "ratings": [],
       "description": "### Description\n\n`Symfony\\Component\\HttpClient\\NoPrivateNetworkHttpClient` is documented as a decorator that blocks requests to private networks by default. The list of blocked subnets (`Symfony\\Component\\HttpFoundation\\IpUtils::PRIVATE_SUBNETS` on 6.4+, a private constant in `NoPrivateNetworkHttpClient` on 5.4) enumerates RFC1918, loopback, link-local and IPv4-mapped IPv6 (`::ffff:0:0/96`) prefixes, but omits the remaining IPv6 transition forms that can embed a private IPv4 destination: 6to4 (`2002::/16`, RFC 3056), Teredo (`2001::/32`, RFC 4380), NAT64 (`64:ff9b::/96`, RFC 6052 and `64:ff9b:1::/48`, RFC 8215) and IPv4-compatible IPv6 (`::/96`, RFC 4291 §2.5.5.1).\n\n`IpUtils::checkIp6()` is a pure bitwise CIDR comparison against the constants list and never extracts the embedded IPv4, so an attacker who can supply a URL writes the loopback / RFC1918 IPv4 target as e.g. `http://[2002:7f00:1::]/` (6to4 → 127.0.0.1), `http://[64:ff9b::7f00:1]/` (NAT64 → 127.0.0.1), `http://[::7f00:1]/` (IPv4-compatible → 127.0.0.1) or `http://[2001::1]/` (Teredo). `IpUtils::isPrivateIp()` returns `false` and `NoPrivateNetworkHttpClient` dispatches the request.\n\nReal-world reachability of the embedded IPv4 depends on the deploy's IPv6 routing (6to4 tunnel interface, upstream NAT64 gateway, kernel handling of IPv4-compatible addresses), but the security boundary the decorator promises — the dispatch decision — is crossed regardless of whether the packet ultimately lands on the embedded IPv4.\n\n### Resolution\n\nThe private-subnet list now includes `::/96`, `2002::/16`, `2001::/32`, `64:ff9b::/96` and `64:ff9b:1::/48`. Blanket blocking of these prefixes matches the policy applied by Chromium and Mozilla's Private Network Access; server-side HTTPS APIs are not legitimately published on these prefixes.\n\nThe patches for this issue are available [here](https://github.com/symfony/symfony/commit/82765368cf74177c36613575182f168a2eb765b2) for branch 5.4 and [here](https://github.com/symfony/symfony/commit/85b831555be8ea1f43bf01078afe87bc4c92f65e) for branch 6.4 (and forward-ported to 7.4, 8.0 and 8.1).\n\n### Credits\n\nSymfony would like to thank tonghuaroot for reporting the issue and Nicolas Grekas for providing the fix.",
-      "recommendation": "Upgrade symfony/http-foundation to version 7.4.13, 8.0.13, 6.4.41, 7.1.0, 7.2.0, 7.3.0, 7.4.0",
+      "recommendation": "Upgrade symfony/http-foundation to version 6.4.41, 7.1.0, 7.2.0, 7.3.0, 7.4.0, 7.4.13, 8.0.13",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-48736"
@@ -7994,7 +7994,7 @@
       },
       "ratings": [],
       "description": "### Description\n\n`Symfony\\Component\\Routing\\Generator\\UrlGenerator::doGenerate()` percent-encodes `.` and `..` path segments so that the generated URL still resolves to the originating route after RFC 3986 §5.2.4 dot-segment removal (which strict RFC-3986 consumers — routers, reverse proxies, HTTP clients — perform *before* percent-decoding).\n\nThe encoding was implemented as `strtr($url, ['/../' => '/%2E%2E/', '/./' => '/%2E/'])` plus a trailing-segment fixup. `strtr` advances past the trailing `/` of each match, so the next dot-segment in a chained sequence was left unescaped:\n\n| Input                | Output (before fix)                      | Expected                            |\n| -------------------- | ---------------------------------------- | ----------------------------------- |\n| `/../../../`         | `/%2E%2E/../%2E%2E/`                     | `/%2E%2E/%2E%2E/%2E%2E/`            |\n| `/foo/../../../bar`  | `/foo/%2E%2E/../%2E%2E/bar`              | `/foo/%2E%2E/%2E%2E/%2E%2E/bar`     |\n\nWhen a route exposes a parameter constrained by a permissive requirement (`.+`, `.*`, or similar) that accepts dots and slashes, attacker-controlled chained `..` or `.` segments produce a generated URL that, under strict RFC 3986 normalization, collapses to a different path than the originating route. The Twig `path()` / `url()` helpers and any server-side use of `UrlGenerator` are affected. Same class of route round-trip integrity issue as CVE-2026-45065.\n\nNote: WHATWG-conformant browsers treat `%2E`/`%2E%2E` as dot-segments during URL parsing, so the encoding never protected browser-side traversal. The defense exists for RFC-3986-conformant consumers; restoring it for chained segments closes the gap there.\n\n### Resolution\n\n`UrlGenerator` now matches every `/.` or `/..` dot-segment in a single left-to-right `preg_replace_callback` pass using a lookahead that does not consume the trailing `/`, so adjacent dot-segments are encoded correctly.\n\nThe patches for this issue are available [here](https://github.com/symfony/symfony/commit/4b63c3a3f7af04ecd79c89a594b0b02a01990b1d) for branch 5.4 (and forward-ported to 6.4, 7.4, 8.0 and 8.1).\n\n### Credits\n\nSymfony would like to thank Alex Pott for reporting the issue and Nicolas Grekas for providing the fix.",
-      "recommendation": "Upgrade symfony/routing to version 7.3.0, 4.0.0, 5.2.0, 5.4.0, 6.3.0, 7.4.0, 3.0.0, 5.3.0, 5.4.53, 6.4.41, 7.4.13, 8.0.13, 6.1.0, 6.2.0, 5.0.0, 5.1.0, 6.4.0, 7.1.0, 7.2.0",
+      "recommendation": "Upgrade symfony/routing to version 5.1.0, 5.2.0, 5.4.53, 5.3.0, 6.1.0, 6.3.0, 7.1.0, 7.2.0, 7.4.13, 8.0.13, 5.4.0, 6.2.0, 6.4.0, 6.4.41, 7.3.0, 3.0.0, 4.0.0, 5.0.0, 7.4.0",
       "advisories": [
         {
           "url": "https://avd.aquasec.com/nvd/cve-2026-48784"
@@ -8024,6 +8024,150 @@
           "versions": [
             {
               "version": "v7.4.9",
+              "status": "affected"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-48806",
+      "source": {
+        "name": "php-security-advisories",
+        "url": "https://github.com/FriendsOfPHP/security-advisories"
+      },
+      "ratings": [
+        {
+          "source": {
+            "name": "ghsa"
+          },
+          "severity": "medium"
+        }
+      ],
+      "description": "### Description\n\nThis is a residual bypass of CVE-2026-47732 / GHSA-pr2w-4gpj-cpq4 left after the initial fix for unguarded `__toString()` calls.\n\nIn 3.26.0 the sandbox visitor was extended to wrap every child node that its parent will string-coerce at runtime with `CheckToStringNode`, gated by the new `CoercesChildrenToStringInterface`. `ArrayExpression` did not implement the interface for its mapping keys: when a dynamic key expression resolves to a `Stringable` object, `ArrayExpression::compile()` emits a raw `(string)` cast (via `StringCastUnary` for `ContextVariable` keys, and no cast at all for richer key expressions). PHP then invokes `__toString()` directly, without ever calling `SandboxExtension::ensureToStringAllowed()`.\n\nA sandboxed template author can therefore trigger `__toString()` on any object reachable in the render context by using it as a dynamic mapping key, for example:\n\n```twig\n{% set arr = {(obj): \"value\"} %}\n```\n\nDirect output of the same object is correctly blocked, which makes this a clear policy enforcement gap. The reliable demonstrated impact is unauthorised disclosure of data returned by `__toString()`.\n\n### Resolution\n\n`ArrayExpression` now declares its dynamic mapping keys as string-coercion sites through `CoercesChildrenToStringInterface`, so the sandbox visitor wraps them with `CheckToStringNode` and the policy is consulted before PHP coerces the key to a string. The compiler also keeps an explicit `(string)` cast around the wrapped expression so PHP type errors on non-string keys are preserved.\n\nAs a side effect, any expression is now accepted as a dynamic mapping key (not only context variables); this is documented as a new feature on the 3.x branch.\n\n### Credits\n\nTwig would like to thank El Kharoubi Iosif for reporting the issue and Fabien Potencier for providing the fix.",
+      "recommendation": "Upgrade twig/twig to version 3.0.0, 3.27.0, 2.0.0",
+      "advisories": [
+        {
+          "url": "https://avd.aquasec.com/nvd/cve-2026-48806"
+        },
+        {
+          "url": "https://github.com/FriendsOfPHP/security-advisories/blob/master/twig/twig/CVE-2026-48806.yaml"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig/releases/tag/v3.27.0"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig/security/advisories/GHSA-5v5v-ww74-355v"
+        },
+        {
+          "url": "https://symfony.com/blog/cve-2026-48806-sandbox-tostring-policy-bypass-via-dynamic-mapping-keys"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:composer/twig/twig@v3.24.0",
+          "versions": [
+            {
+              "version": "v3.24.0",
+              "status": "affected"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-48807",
+      "source": {
+        "name": "php-security-advisories",
+        "url": "https://github.com/FriendsOfPHP/security-advisories"
+      },
+      "ratings": [
+        {
+          "source": {
+            "name": "ghsa"
+          },
+          "severity": "medium"
+        }
+      ],
+      "description": "### Description\n\nThis is a residual bypass of CVE-2026-47732 / GHSA-pr2w-4gpj-cpq4 left after the initial fix for unguarded `__toString()` calls. It covers two related coercion points that were not caught by the original patch.\n\n**`Traversable` in `join` and `replace` filters.** `SandboxExtension::ensureToStringAllowed()` recurses into PHP arrays so that a `Stringable` object hidden inside an array argument cannot be string-coerced without consulting the security policy. The recursion stops at PHP arrays: a `Traversable` value passed at the same position is not materialised, so its contents are not policy-checked. `CoreExtension::join()` and `CoreExtension::replace()` later materialise such `Traversable` inputs through `self::toArray()` and feed them to `implode()` / `strtr()`, both of which implicitly call `__toString()` on contained `Stringable` objects. The bypass also reproduces when the container implements both `Stringable` and `Traversable`: the container's own `__toString()` is policy-checked, but the elements yielded by `getIterator()` are not, and the consuming filters still coerce them to string.\n\n**`in` and `not in` operators.** `InBinary` and `NotInBinary` compile to `CoreExtension::inFilter()`, which falls through to PHP's `<=>` operator when comparing a string with a `Stringable` object. PHP coerces the object to string via `__toString()` without the sandbox policy being consulted. Beyond the direct side effect, `in` can also be used as a content-leak oracle: each probe against an attacker-chosen needle leaks one bit of equality, and chained probes can reconstruct the string returned by `__toString()` even when every method is denied. The bypass reproduces with both array and `Traversable` haystacks, and on both operand sides.\n\nA sandboxed template author who is allowed to call `join` / `replace`, or to use the `in` / `not in` operators, can therefore trigger a disallowed `__toString()` method on objects reachable from the render context, even when that method is not on `SecurityPolicy::$allowedMethods`. The bypass reproduces both under global sandbox mode and when sandboxing is enabled through `SourcePolicyInterface`.\n\n### Resolution\n\n`SandboxExtension::ensureToStringAllowed()` now also recurses into `Traversable` operands when sandboxing is active for the current source: each value is materialised once and run through the same array-recursion path, so the policy is consulted before the filter implementation can coerce contained objects to strings. This applies to plain `Traversable` operands as well as to containers that implement both `Stringable` and `Traversable`: the container's own `__toString()` is still policy-checked, and the yielded elements are additionally checked. The materialisation is guarded by `isSandboxed($source)` so that non-sandboxed code paths do not pay the cost or change generator-exhaustion semantics.\n\n`InBinary` and `NotInBinary` now implement `Twig\\Node\\CoercesChildrenToStringInterface` and declare both operands as string-coerced, so `SandboxNodeVisitor` wraps each operand in `CheckToStringNode`. The policy is consulted before `CoreExtension::inFilter()` reaches PHP's `<=>` operator, matching the existing protection on the other comparison binaries (`Equal`, `Less`, `Greater`, `Spaceship`, ...).\n\n### Credits\n\nTwig would like to thank Vincent55 Yang and Fabien Potencier for reporting the issues and Fabien Potencier for providing the fix.",
+      "recommendation": "Upgrade twig/twig to version 3.27.0, 2.0.0, 3.0.0",
+      "advisories": [
+        {
+          "url": "https://avd.aquasec.com/nvd/cve-2026-48807"
+        },
+        {
+          "url": "https://github.com/FriendsOfPHP/security-advisories/blob/master/twig/twig/CVE-2026-48807.yaml"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig/releases/tag/v3.27.0"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig/security/advisories/GHSA-8x9c-rmqh-456c"
+        },
+        {
+          "url": "https://symfony.com/blog/cve-2026-48807-sandbox-tostring-policy-bypass-via-traversable-in-join-replace-and-in-not-in-operators"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:composer/twig/twig@v3.24.0",
+          "versions": [
+            {
+              "version": "v3.24.0",
+              "status": "affected"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-48808",
+      "source": {
+        "name": "php-security-advisories",
+        "url": "https://github.com/FriendsOfPHP/security-advisories"
+      },
+      "ratings": [
+        {
+          "source": {
+            "name": "ghsa"
+          },
+          "severity": "medium"
+        }
+      ],
+      "description": "### Description\n\nThis is a residual bypass of CVE-2026-46635 / GHSA-vcc8-phrv-43wj that only affects sandboxing enabled through `SourcePolicyInterface` (and not the regular global sandbox mode).\n\n`CoreExtension::column()` receives the active sandbox state via the `needs_is_sandboxed` channel as a boolean `$isSandboxed`, but then routes the per-element property reads through `SandboxExtension::checkPropertyAllowed()` without forwarding the current `Source`. `SandboxExtension::checkPropertyAllowed()` re-evaluates `isSandboxed($source)` internally; with `$source = null` the `SourcePolicyInterface`-driven decision is lost, the method short-circuits to \"not sandboxed\", and the property allowlist is never consulted.\n\nA template author whose sandbox is gated by a `SourcePolicyInterface` and who has `column` on their `allowedFilters` list can therefore read any public or magic property of any object reachable in the render context, regardless of `SecurityPolicy::$allowedProperties`. Direct attribute access to the same property is blocked, and the same payload is also blocked under global sandbox mode, which makes this a clear policy enforcement gap rather than a configuration issue.\n\n### Resolution\n\n`CoreExtension::column()` no longer goes through the `SandboxExtension` wrapper for the property check. It calls the security policy directly: the per-source decision is already captured by the `$isSandboxed` boolean computed at the call site, so the property allowlist is enforced consistently for both global and source-policy sandboxing.\n\n### Credits\n\nTwig would like to thank Vincent55 Yang for reporting the issue and Fabien Potencier for providing the fix.",
+      "recommendation": "Upgrade twig/twig to version 3.27.0, 2.0.0, 3.0.0",
+      "advisories": [
+        {
+          "url": "https://avd.aquasec.com/nvd/cve-2026-48808"
+        },
+        {
+          "url": "https://github.com/FriendsOfPHP/security-advisories/blob/master/twig/twig/CVE-2026-48808.yaml"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig/releases/tag/v3.27.0"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig/security/advisories/GHSA-h8vq-8gpg-mhcg"
+        },
+        {
+          "url": "https://symfony.com/blog/cve-2026-48808-sandbox-property-allowlist-bypass-via-the-column-filter-under-sourcepolicyinterface"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:composer/twig/twig@v3.24.0",
+          "versions": [
+            {
+              "version": "v3.24.0",
               "status": "affected"
             }
           ]
@@ -8149,6 +8293,92 @@
       ]
     },
     {
+      "id": "CVE-2026-49858",
+      "source": {
+        "name": "ghsa",
+        "url": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Acomposer"
+      },
+      "ratings": [
+        {
+          "source": {
+            "name": "ghsa"
+          },
+          "score": 5.9,
+          "severity": "medium",
+          "method": "CVSSv31",
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
+        }
+      ],
+      "cwes": [
+        524,
+        639
+      ],
+      "description": "API Platform Core is a system to create hypermedia-driven REST and GraphQL APIs. In versions from 2.6.0 prior to 4.1.29, 4.2.26, and 4.3.12, a missing isCacheKeySafe gate in the JSON:API and HAL item normalizers causes a cross-user attribute leak.  #[ApiProperty(security: ...)] is evaluated per request to decide whether a property is exposed. The componentsCache arrays in ApiPlatform\\JsonApi\\Serializer\\ItemNormalizer and ApiPlatform\\Hal\\Serializer\\ItemNormalizer are keyed on $context['cache_key'], which is set unconditionally before delegating to the parent normalizer. The component structure (attributes, relationships, links) computed for one request can therefore be reused for a subsequent request whose user has a different set of accessible properties. A user with lower privileges may end up seeing the structure of properties that the security predicate would otherwise have hidden for them. This issue has been fixed in versions 4.1.29, 4.2.26, and 4.3.12.",
+      "recommendation": "Upgrade api-platform/core to version 4.1.29, 4.2.25, 4.3.8",
+      "advisories": [
+        {
+          "url": "https://avd.aquasec.com/nvd/cve-2026-49858"
+        },
+        {
+          "url": "https://github.com/api-platform/core"
+        },
+        {
+          "url": "https://github.com/api-platform/core/security/advisories/GHSA-pjhx-3c3w-9v23"
+        },
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-49858"
+        }
+      ],
+      "published": "2026-07-01T20:17:10+00:00",
+      "updated": "2026-07-02T18:41:35+00:00",
+      "affects": [
+        {
+          "ref": "pkg:composer/api-platform/core@v4.1.28",
+          "versions": [
+            {
+              "version": "v4.1.28",
+              "status": "affected"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-49981",
+      "source": {
+        "name": "ghsa",
+        "url": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Acomposer"
+      },
+      "ratings": [],
+      "description": "### Description\n\nThe per-template filter, tag and function allow-list check is compiled into the `checkSecurity()` method of each `Template` subclass and was invoked once from the constructor, gated by `SandboxExtension::isSandboxed($source)`. `Template` instances are then cached on the `Environment` in `$loadedTemplates`, so the verdict computed at construction time was sticky for the rest of the process.\n\nAny later change of sandbox state on the same `Environment` left that cached verdict in place: toggling `SandboxExtension::enableSandbox()`/`disableSandbox()`, swapping the policy via `setSecurityPolicy()`, a `SourcePolicyInterface` decision flip, or simply having a parent, macro or included template pre-instantiated outside the sandbox before a sandboxed render reached it. In all of these cases, the filters, tags and functions used by the affected template kept running with the original (typically empty) check, bypassing the `SecurityPolicy` allow-list.\n\nMethod, property and `__toString` allow-lists are not affected: they are enforced at every call site at runtime through `SandboxExtension::checkMethodAllowed()`, `checkPropertyAllowed()` and `ensureToStringAllowed()`, which re-read the current state on every call.\n\nLong-lived workers (FrankenPHP, RoadRunner, Symfony Messenger consumers, FPM with hot autoloading) that share a single `Environment` between sandboxed and non-sandboxed renders are the most exposed: a single non-sandboxed render of a shared layout pre-warms its `Template` instance, after which any later sandboxed render that extends, uses, includes or imports from that layout silently skips the filter/tag/function allow-list for the pre-warmed instance.\n\n### Resolution\n\nThe allow-list check is no longer run from the constructor. `Template` gains a public `ensureSecurityChecked()` method that calls the compiled `checkSecurity()` only when `SandboxExtension::isSandboxed($source)` returns true for the current source, and it is invoked at every entry point that can reach a `Template` instance whose security has not yet been verified against the current state: `Template::yield()`, `Template::yieldBlock()` (on the resolved block template, which covers `extends`, `use`, traits and parent blocks), `Template::getParent()` (which evaluates user code when the parent name is dynamic) and `Template::getTemplateForMacro()` (on the resolved macro template).\n\nThe explicit `checkSecurity()` calls previously emitted by `IncludeNode` and `CoreExtension::include()` are removed: the included template's own `yield()` now re-runs the check against the current sandbox state. The compiled `checkSecurity()` body is a cheap walk over compile-time-static arrays, so the per-render cost is negligible. Old cached compiled PHP files keep working unchanged: the constructor-time call they still contain is idempotent.\n\n### Credits\n\nTwig would like to thank Fabien Potencier for reporting and fixing the issue.",
+      "recommendation": "Upgrade twig/twig to version 3.27.0",
+      "advisories": [
+        {
+          "url": "https://avd.aquasec.com/nvd/cve-2026-49981"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig/releases/tag/v3.27.0"
+        },
+        {
+          "url": "https://github.com/twigphp/Twig/security/advisories/GHSA-529h-vh3j-85hq"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "pkg:composer/twig/twig@v3.24.0",
+          "versions": [
+            {
+              "version": "v3.24.0",
+              "status": "affected"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "CVE-2026-55568",
       "source": {
         "name": "php-security-advisories",
@@ -8184,7 +8414,7 @@
         }
       ],
       "published": "2026-06-23T16:17:02+00:00",
-      "updated": "2026-06-23T17:57:05+00:00",
+      "updated": "2026-06-26T19:34:13+00:00",
       "affects": [
         {
           "ref": "pkg:composer/guzzlehttp/guzzle@7.10.0",
@@ -8232,7 +8462,7 @@
         }
       ],
       "published": "2026-06-23T16:17:03+00:00",
-      "updated": "2026-06-23T17:57:05+00:00",
+      "updated": "2026-06-30T17:17:36+00:00",
       "affects": [
         {
           "ref": "pkg:composer/guzzlehttp/psr7@2.9.0",
@@ -8280,7 +8510,7 @@
         }
       ],
       "published": "2026-06-23T16:17:03+00:00",
-      "updated": "2026-06-23T18:18:09+00:00",
+      "updated": "2026-06-26T19:34:41+00:00",
       "affects": [
         {
           "ref": "pkg:composer/guzzlehttp/guzzle@7.10.0",
