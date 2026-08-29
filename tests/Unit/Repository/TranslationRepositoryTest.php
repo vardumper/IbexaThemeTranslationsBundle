@@ -46,6 +46,8 @@ function makeQbWithQuery(array $result = [], array $scalarResult = [], mixed $on
     $qb->method('setMaxResults')->willReturnSelf();
     $qb->method('setFirstResult')->willReturnSelf();
     $qb->method('orderBy')->willReturnSelf();
+    // countByFilter() clears the ORDER BY before counting so PostgreSQL accepts the COUNT query.
+    $qb->method('resetDQLPart')->willReturnSelf();
     $qb->method('delete')->willReturnSelf();
     $qb->method('getQuery')->willReturn($query);
     $qb->method('expr')->willReturn($expr);
@@ -307,6 +309,19 @@ it('findAllGroupedByLanguage groups rows by language', function () {
 
 it('countByFilter returns the scalar count as an int', function () {
     [$qb] = makeQbWithQuery([], [], null, 1, 42);
+    $repo = makeTranslationRepo($qb);
+
+    expect($repo->countByFilter())->toBe(42);
+});
+
+it('countByFilter strips the ORDER BY before counting (PostgreSQL GROUP BY #42803)', function () {
+    [$qb] = makeQbWithQuery([], [], null, 1, 42);
+    // createFilteredQueryBuilder() always adds an ORDER BY; the COUNT must drop it so that
+    // "SELECT COUNT(t.id) ... ORDER BY t.id ASC" never reaches PostgreSQL (SQLSTATE[42803]).
+    $qb->expects(testMock(PHPUnit\Framework\TestCase::class)->once())
+        ->method('resetDQLPart')
+        ->with('orderBy');
+
     $repo = makeTranslationRepo($qb);
 
     expect($repo->countByFilter())->toBe(42);

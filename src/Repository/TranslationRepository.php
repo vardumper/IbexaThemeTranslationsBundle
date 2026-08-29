@@ -185,10 +185,16 @@ class TranslationRepository extends ServiceEntityRepository
 
     /**
      * Number of rows matching the filter (SQL COUNT — no entity hydration).
+     *
+     * The ORDER BY added by createFilteredQueryBuilder() is cleared before counting: a
+     * COUNT(*) query that still carries "ORDER BY t.id" on a non-aggregated column is
+     * rejected by PostgreSQL with SQLSTATE[42803] (GROUP BY error), so the ordering must
+     * be dropped for aggregate queries. Ordering is irrelevant to a row count anyway.
      */
     public function countByFilter(string $languageCode = '', string $status = '', string $search = '', string $sortBy = 'id', string $sortDir = 'ASC'): int
     {
         return (int) $this->createFilteredQueryBuilder($languageCode, $status, $search, $sortBy, $sortDir)
+            ->resetDQLPart('orderBy')
             ->select('COUNT(t.id)')
             ->getQuery()
             ->getSingleScalarResult();
