@@ -1,0 +1,19 @@
+# Redis cache tier (Tier 2). Loaded by IbexaThemeTranslationsExtension only when
+# ibexa_theme_translations.redis.enabled = true — the `if:` service key is not
+# supported across all Symfony versions this bundle targets.
+
+services:
+    # Dedicated cache pool for theme translations (tag-aware so we can tag/invalidate by language).
+    # Requires a Redis adapter in the host app.
+    cache.ibexa_theme_translations:
+        parent: cache.redis
+        tags:
+            - { name: cache.pool, namespace: 'theme_translations' }
+
+    # Cache: Redis (Tier 2). TranslationService skips this tier when it is not registered.
+    vardumper\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache:
+        arguments:
+            $cache: '@cache.ibexa_theme_translations'
+            $prefix: '%ibexa_theme_translations.redis.prefix%'
+        tags:
+            - { name: ibexa_theme_translations.cache }

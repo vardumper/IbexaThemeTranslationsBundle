@@ -9,7 +9,7 @@ use Ibexa\Contracts\AdminUi\Controller\Controller;
 use Ibexa\Contracts\Core\Repository\LanguageService;
 use League\Csv\Reader;
 use League\Csv\Writer;
-use Pagerfanta\Adapter\ArrayAdapter;
+use Pagerfanta\Adapter\AdapterInterface;
 use Pagerfanta\Pagerfanta;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -18,6 +18,10 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
 use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
 use vardumper\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
 use vardumper\IbexaThemeTranslationsBundle\FieldType\Translation\Value;
@@ -31,6 +35,15 @@ use vardumper\IbexaThemeTranslationsBundle\Service\LanguageResolverInterface;
 
 final class TranslationsController extends Controller
 {
+    private const CSRF_INLINE_SAVE = 'translations_inline_save';
+    private const CSRF_DEEPL_TRANSLATE = 'translations_deepl_translate';
+    private const CSRF_DRAFT_ACCEPT = 'translations_draft_accept';
+    private const CSRF_DRAFT_REVERT = 'translations_draft_revert';
+    private const CSRF_DELETE = 'translations_delete';
+
+    /** Flush chunk size for bulk imports. */
+    private const IMPORT_FLUSH_CHUNK = 500;
+
     public function __construct(
         private readonly TranslationRepository $translationRepository,
         private readonly TranslationDraftRepository $translationDraftRepository,
@@ -39,14 +52,16 @@ final class TranslationsController extends Controller
         private readonly LanguageResolverInterface $languageResolver,
         private readonly LanguageService $languageService,
         private readonly DeeplTranslationService $deeplTranslationService,
+        private readonly TranslationCacheWarmer $cacheWarmer,
+        private readonly CsrfTokenManagerInterface $csrfTokenManager,
     ) {
     }
 
     public function listAction(Request $request, $page = 1): Response
     {
         $vals = $request->query->all('translations_filter');
-        $sortBy = $request->query->get('sort_by', 'id');
-        $sortDir = $request->query->get('sort_dir', 'ASC');
+        $sortBy = (string) $request->query->get('sort_by', 'id');
+        $sortDir = (string) $request->query->get('sort_dir', 'ASC');
         $filterForm = $this->formFactory->createNamed('translations_filter', TranslationFilterType::class, [
             'languageCode' => $vals['languageCode'] ?? '',
             'status' => $vals['status'] ?? '',
@@ -57,13 +72,49 @@ final class TranslationsController extends Controller
             'csrf_protection' => false,
         ]);
 
-        $all = $this->translationRepository->findByFilter(
-            $vals['languageCode'] ?? '',
-            $vals['status'] ?? '',
-            $vals['search'] ?? '',
+        // Paginate at the SQL level instead of loading every matching row into memory.
+        $adapter = new class(
+            $this->translationRepository,
+            (string) ($vals['languageCode'] ?? ''),
+            (string) ($vals['status'] ?? ''),
+            (string) ($vals['search'] ?? ''),
             $sortBy,
             $sortDir,
-        );
+        ) implements AdapterInterface {
+            public function __construct(
+                private readonly TranslationRepository $repository,
+                private readonly string $languageCode,
+                private readonly string $status,
+                private readonly string $search,
+                private readonly string $sortBy,
+                private readonly string $sortDir,
+            ) {
+            }
+
+            public function getNbResults(): int
+            {
+                return $this->repository->countByFilter(
+                    $this->languageCode,
+                    $this->status,
+                    $this->search,
+                    $this->sortBy,
+                    $this->sortDir,
+                );
+            }
+
+            public function getSlice(int $offset, int $length): iterable
+            {
+                return $this->repository->findPagedByFilter(
+                    $this->languageCode,
+                    $this->status,
+                    $this->search,
+                    $this->sortBy,
+                    $this->sortDir,
+                    $offset,
+                    $length,
+                );
+            }
+        };
 
         $currentPage = filter_var(
             $page,
@@ -71,8 +122,8 @@ final class TranslationsController extends Controller
             ['options' => ['min_range' => 1]]
         ) ?: 1;
 
-        $paginator = new Pagerfanta(new ArrayAdapter($all));
-        $paginator->setMaxPerPage((int)($vals['perPage'] ?? 25));
+        $paginator = new Pagerfanta($adapter);
+        $paginator->setMaxPerPage((int) ($vals['perPage'] ?? 25));
         $paginator->setCurrentPage($currentPage);
 
         $pageResults = iterator_to_array($paginator->getCurrentPageResults());
@@ -177,6 +228,11 @@ final class TranslationsController extends Controller
             return new Response('No id provided', 404);
         }
 
+        $trans = $this->translationRepository->find($id);
+        if ($trans === null) {
+            return new Response('Translation not found', 404);
+        }
+
         $editForm = $this->formFactory->createNamed(
             'translation_edit',
             TranslationType::class
@@ -192,8 +248,6 @@ final class TranslationsController extends Controller
         $editForm->add('save', SubmitType::class, [
             'label' => 'Save Changes',
         ]);
-
-        $trans = $this->translationRepository->find($id);
 
         if ($request->isMethod('POST')) {
             $editForm->handleRequest($request);
@@ -235,6 +289,10 @@ final class TranslationsController extends Controller
 
     public function deeplTranslateAction(Request $request, int $id): Response
     {
+        if (!$this->isCsrfValid($request, self::CSRF_DEEPL_TRANSLATE)) {
+            return new JsonResponse(['error' => 'Invalid CSRF token'], Response::HTTP_FORBIDDEN);
+        }
+
         if (!$this->deeplTranslationService->isConfigured()) {
             return new JsonResponse([
                 'error' => 'DeepL is not configured',
@@ -297,8 +355,12 @@ final class TranslationsController extends Controller
         ]);
     }
 
-    public function acceptDraftAction(int $id): Response
+    public function acceptDraftAction(Request $request, int $id): Response
     {
+        if (!$this->isCsrfValid($request, self::CSRF_DRAFT_ACCEPT)) {
+            return new JsonResponse(['error' => 'Invalid CSRF token'], Response::HTTP_FORBIDDEN);
+        }
+
         $draft = $this->translationDraftRepository->find($id);
         if (!$draft) {
             return new JsonResponse([
@@ -306,21 +368,33 @@ final class TranslationsController extends Controller
             ], Response::HTTP_NOT_FOUND);
         }
 
-        $entity = $this->translationRepository->findOneBy([
-            'transKey' => $draft->getTransKey(),
-            'languageCode' => $draft->getLanguageCode(),
-        ]);
-        if ($entity === null) {
-            $entity = new Translation($draft->getLanguageCode(), $draft->getTransKey(), $draft->getTranslation());
-        } else {
-            $entity->setTranslation($draft->getTranslation());
+        // Remove + upsert atomically so a failure cannot leave the draft deleted
+        // without the translation being applied.
+        $this->entityManager->beginTransaction();
+        try {
+            $entity = $this->translationRepository->findOneBy([
+                'transKey' => $draft->getTransKey(),
+                'languageCode' => $draft->getLanguageCode(),
+            ]);
+            if ($entity === null) {
+                $entity = new Translation($draft->getLanguageCode(), $draft->getTransKey(), $draft->getTranslation());
+            } else {
+                $entity->setTranslation($draft->getTranslation());
+            }
+
+            $translation = $draft->getTranslation();
+
+            $this->entityManager->persist($entity);
+            $this->entityManager->remove($draft);
+            $this->entityManager->flush();
+            $this->entityManager->commit();
+        } catch (\Throwable $e) {
+            $this->entityManager->rollback();
+
+            return new JsonResponse([
+                'error' => 'Accepting the draft failed, please try again.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $translation = $draft->getTranslation();
-
-        $this->entityManager->persist($entity);
-        $this->entityManager->remove($draft);
-        $this->entityManager->flush();
 
         return new JsonResponse([
             'success' => true,
@@ -328,8 +402,12 @@ final class TranslationsController extends Controller
         ]);
     }
 
-    public function revertDraftAction(int $id): Response
+    public function revertDraftAction(Request $request, int $id): Response
     {
+        if (!$this->isCsrfValid($request, self::CSRF_DRAFT_REVERT)) {
+            return new JsonResponse(['error' => 'Invalid CSRF token'], Response::HTTP_FORBIDDEN);
+        }
+
         $draft = $this->translationDraftRepository->find($id);
         if (!$draft) {
             return new JsonResponse([
@@ -347,10 +425,14 @@ final class TranslationsController extends Controller
 
     public function inlineSaveAction(Request $request, int $id): Response
     {
-        $data = json_decode($request->getContent(), true);
-        $translation = $data['translation'] ?? null;
+        if (!$this->isCsrfValid($request, self::CSRF_INLINE_SAVE)) {
+            return new JsonResponse(['error' => 'Invalid CSRF token'], Response::HTTP_FORBIDDEN);
+        }
 
-        if ($translation === null) {
+        $data = json_decode((string) $request->getContent(), true);
+        $translation = \is_array($data) ? ($data['translation'] ?? null) : null;
+
+        if (!\is_string($translation)) {
             return new JsonResponse([
                 'error' => 'No translation provided',
             ], Response::HTTP_BAD_REQUEST);
@@ -372,13 +454,21 @@ final class TranslationsController extends Controller
         ]);
     }
 
-    public function deleteAction($id = null): Response
+    public function deleteAction(Request $request, $id = null): Response
     {
         if ($id === null) {
             return new Response('No id provided', 404);
         }
 
+        if (!$this->isCsrfValid($request, self::CSRF_DELETE)) {
+            return new Response('Invalid CSRF token', 403);
+        }
+
         $entity = $this->translationRepository->find($id);
+        if ($entity === null) {
+            return new Response('Translation not found', 404);
+        }
+
         $this->entityManager->remove($entity);
         $this->entityManager->flush();
         $this->entityManager->clear();
@@ -388,24 +478,48 @@ final class TranslationsController extends Controller
 
     public function exportAction(): Response
     {
-        $translations = $this->translationRepository->findAll();
-        $fileName = sprintf('translation-export-%s.csv', time());
-        $csv = Writer::createFromString();
-        $csv->setDelimiter(';');
-        $csv->setOutputBOM(Reader::BOM_UTF8);
-        $csv->insertOne(['id', 'transKey', 'languageCode', 'translation']);
-        $records = [];
-        foreach ($translations as $translation) {
-            $records[] = $translation->jsonSerialize();
-        }
-        $csv->insertAll($records);
-        $response = new Response();
-        $response->headers->set('Content-type', 'text/csv');
-        $response->headers->set('Cache-Control', 'private');
-        $response->headers->set('Content-Disposition', 'attachment; filename="' . $fileName . '";');
-        $response->setContent($csv->toString());
+        // Stream rows instead of materializing the whole table in memory.
+        $query = $this->translationRepository->createExportQuery();
 
-        return $response;
+        $fileName = sprintf('translation-export-%s.csv', date('Ymd-His'));
+
+        return new StreamedResponse(
+            static function () use ($query): void {
+                $csv = Writer::createFromStream(fopen('php://output', 'wb'));
+                $csv->setDelimiter(';');
+                $csv->setOutputBOM(Reader::BOM_UTF8);
+                $csv->insertOne(['id', 'transKey', 'languageCode', 'translation']);
+
+                $writeRow = static function (array $row) use ($csv): void {
+                    $csv->insertOne([
+                        (string) ($row['id'] ?? ''),
+                        (string) ($row['transKey'] ?? ''),
+                        (string) ($row['languageCode'] ?? ''),
+                        (string) ($row['translation'] ?? ''),
+                    ]);
+                };
+
+                if (method_exists($query, 'onEachResult')) { /* Doctrine ORM 3.1+ */
+                    $query->onEachResult(static function (array $row) use ($writeRow): void {
+                        $writeRow($row);
+                    });
+                } else {
+                    foreach ($query->iterate() as $row) {
+                        if (\is_array($row)) {
+                            $writeRow($row);
+                        }
+                    }
+                }
+
+                // No explicit flush needed: Symfony's StreamedResponse flushes php://output.
+            },
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'text/csv',
+                'Cache-Control' => 'private',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            ]
+        );
     }
 
     public function importAction(Request $request): Response
@@ -417,50 +531,105 @@ final class TranslationsController extends Controller
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            $mode = $form->getData()['mode'];
+            /** @var UploadedFile $csvFile */
+            $csvFile = $form->get('csv')->getData();
+            $mode = (string) ($form->getData()['mode'] ?? '');
+
+            // Detect the delimiter from the header line (robust for any file size, BOM-aware).
+            $headerLine = '';
+            $handle = fopen($csvFile->getPathname(), 'rb');
+            if ($handle !== false) {
+                $fetched = fgets($handle);
+                if ($fetched !== false) {
+                    $headerLine = $fetched;
+                }
+                fclose($handle);
+            }
+            $separator = str_contains(preg_replace('/^\xEF\xBB\xBF/', '', $headerLine), ';') ? ';' : ',';
+
+            $reader = Reader::createFromPath($csvFile->getPathname(), 'r');
+            $reader->setHeaderOffset(0);
+            $reader->setDelimiter($separator);
+
+            // Collect and validate all rows up front (the CSV's id column is an export
+            // artifact and is intentionally ignored on import).
+            $records = [];
+            $skippedRows = [];
+            $rowNumber = 0;
+            foreach ($reader->getRecords() as $record) {
+                $rowNumber++;
+                if (!\is_array($record)) {
+                    continue;
+                }
+
+                $transKey = trim((string) ($record['transKey'] ?? ''));
+                $languageCode = trim((string) ($record['languageCode'] ?? ''));
+                if ($transKey === '' || $languageCode === '') {
+                    $skippedRows[] = "row {$rowNumber} (missing transKey or languageCode)";
+                    continue;
+                }
+
+                $records[] = [
+                    'transKey' => $transKey,
+                    'languageCode' => $languageCode,
+                    'translation' => isset($record['translation']) ? (string) $record['translation'] : null,
+                ];
+            }
 
             if ($mode === 'truncate') {
+                // Bulk delete bypasses entity listeners — clear every tier explicitly so
+                // languages absent from the CSV do not keep serving stale translations.
+                $this->cacheWarmer->clearAll();
                 $this->translationRepository->truncate();
             }
 
-            /** @var UploadedFile $csvFile */
-            $csvFile = $form->get('csv')->getData();
-            $reader = Reader::createFromPath($csvFile->getPathname(), 'r');
-
-            $tmp = new \SplFileObject($csvFile->getPathname());
-            $tmp->seek(2);
-            $line = $tmp->current();
-            $separator = \str_contains($line, ';') ? ';' : ',';
-            $tmp = null;
-
-            $reader->setHeaderOffset(0);
-            $reader->setDelimiter($separator);
-            $records = $reader->getRecords();
-
-            foreach ($records as $record) {
-                if ($mode === 'merge') {
-                    try {
-                        $entity = $this->translationRepository->findOneBy([
-                            'transKey' => $record['transKey'],
-                            'languageCode' => $record['languageCode'],
-                        ]);
-                    } catch (\Exception $e) {
-                        $entity = null;
-                    }
-                    if ($entity === null) {
-                        continue;
-                    }
-                    $entity->setTranslation($record['translation']);
-                    $entity->setTransKey($record['transKey']);
-                    $entity->setLanguageCode($record['languageCode']);
-                } else {
-                    $entity = Translation::fromArray($record);
+            // One query for all existing rows in scope instead of one per CSV row.
+            $existingMap = [];
+            if ($records !== []) {
+                foreach (
+                    $this->translationRepository->findByTransKeysAndLanguages(
+                        array_values(array_unique(array_column($records, 'transKey'))),
+                        array_values(array_unique(array_column($records, 'languageCode')))
+                    ) as $existing
+                ) {
+                    $existingMap[$existing->getTransKey() . "\0" . $existing->getLanguageCode()] = $existing;
                 }
+            }
+
+            $pendingFlushes = 0;
+            foreach ($records as $record) {
+                $pairId = $record['transKey'] . "\0" . $record['languageCode'];
+
+                if (isset($existingMap[$pairId])) {
+                    $entity = $existingMap[$pairId];
+                    $entity->setTranslation($record['translation']);
+                } else {
+                    // Merge mode adds new keys (as the UI promises); truncate mode inserts everything fresh.
+                    $entity = Translation::create($record['languageCode'], $record['transKey'], $record['translation']);
+                }
+
                 $this->entityManager->persist($entity);
+
+                if (++$pendingFlushes >= self::IMPORT_FLUSH_CHUNK) {
+                    $this->entityManager->flush();
+                    $this->entityManager->clear();
+                    $pendingFlushes = 0;
+                }
             }
             $this->entityManager->flush();
             $this->entityManager->clear();
-            \unlink($csvFile->getPathname());
+
+            @unlink($csvFile->getPathname());
+
+            if ($skippedRows !== []) {
+                $this->addFlash('warning', sprintf(
+                    'Import finished with %d skipped row(s): %s',
+                    \count($skippedRows),
+                    implode('; ', array_slice($skippedRows, 0, 5))
+                ));
+            } else {
+                $this->addFlash('success', sprintf('Imported %d translation(s).', \count($records)));
+            }
 
             return $this->redirectToRoute('ibexa_theme_translations.list');
         }
@@ -468,5 +637,22 @@ final class TranslationsController extends Controller
         return $this->render('@IbexaThemeTranslations/admin/translations/import.html.twig', [
             'form' => $form->createView(),
         ]);
+    }
+
+    /**
+     * Validates the CSRF token sent by the admin UI's fetch() calls.
+     * The token arrives either as a "_token" field in a JSON body or as a regular POST parameter.
+     */
+    private function isCsrfValid(Request $request, string $tokenId): bool
+    {
+        $content = (string) $request->getContent();
+        if ($content !== '' && str_starts_with(ltrim($content), '{')) {
+            $data = json_decode($content, true);
+            $token = \is_array($data) ? ($data['_token'] ?? null) : null;
+        } else {
+            $token = $request->request->get('_token');
+        }
+
+        return \is_string($token) && $this->csrfTokenManager->isTokenValid(new CsrfToken($tokenId, $token));
     }
 }

@@ -10,6 +10,9 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/IbexaThemeTranslationsBundle.php'
+            # Registered only in services.redis.yaml (when the Redis tier is enabled);
+            # auto-registering it unconditionally would break autowiring of its $cache/$prefix args.
+            - '../src/Cache/RedisTranslationCache.php'
 
     # Cache: Static Array (Tier 1)
     vardumper\IbexaThemeTranslationsBundle\Cache\StaticArrayTranslationCache:
@@ -18,19 +21,10 @@ services:
         tags:
             - { name: ibexa_theme_translations.cache }
 
-    # Dedicated cache pool for theme translations (tag-aware so we can tag/invalidate by language)
-    cache.ibexa_theme_translations:
-        parent: cache.redis
-        tags:
-            - { name: cache.pool, namespace: 'theme_translations' }
-
-    # Cache: Redis (Tier 2)
-    vardumper\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache:
-        arguments:
-            $cache: '@cache.ibexa_theme_translations'
-            $prefix: '%ibexa_theme_translations.redis.prefix%'
-        tags:
-            - { name: ibexa_theme_translations.cache }
+    # The Redis tier (dedicated cache pool + RedisTranslationCache) lives in
+    # services.redis.yaml and is only loaded by the extension when
+    # ibexa_theme_translations.redis.enabled = true. TranslationService then
+    # skips this tier entirely (the service is nullable).
 
     # Cache: Public static files for headless front-ends (JSON + TypeScript, Tier 3)
     vardumper\IbexaThemeTranslationsBundle\Cache\PublicTranslationsCache:
@@ -98,7 +92,5 @@ services:
         tags:
             - { name: ibexa.field_type.indexable, alias: translation }
 
-    # Doctrine Entity Listener
-    vardumper\IbexaThemeTranslationsBundle\EventListener\TranslationCacheInvalidationListener:
-        tags:
-            - { name: doctrine.orm.entity_listener, entity_manager: default }
+    # Note: TranslationCacheInvalidationListener and TranslationKeyPropagationListener are
+    # registered via their AsEntityListener/AsDoctrineListener attributes (autoconfigure) — no manual tags needed.

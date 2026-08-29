@@ -65,7 +65,7 @@ final class TranslationType extends AbstractType
             ],
         ]);
         $builder->add('translation', TextType::class, [
-            'required' => true,
+            'required' => false, // empty translations are a valid "missing" state; the DB column is nullable
             'label' => 'Translation',
             'attr' => [
                 'class' => 'form-control',
@@ -75,7 +75,13 @@ final class TranslationType extends AbstractType
                 'class' => 'help-text',
             ],
             'error_bubbling' => true,
-            'invalid_message' => 'The Translation contains invalid characters.',
+            'invalid_message' => 'The Translation is invalid.',
+            // Must match the DB column length (VARCHAR(1000)) — otherwise long input fails at flush time with a 500.
+            'constraints' => [
+                new Length([
+                    'max' => 1000,
+                ]),
+            ],
         ]);
     }
 

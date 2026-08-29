@@ -46,10 +46,13 @@ final class TranslationKeyPropagationListener
 
         $em = $args->getObjectManager();
         $activeLanguages = $this->languageResolver->getUsedLanguages();
+
+        // One query for all pending keys instead of one per key.
+        $existingByLanguage = $this->translationRepository->findLanguageCodesForKeys($keys);
         $created = false;
 
         foreach ($keys as $transKey) {
-            $existing = array_flip($this->translationRepository->findLanguageCodesForKey($transKey));
+            $existing = array_flip($existingByLanguage[$transKey] ?? []);
 
             foreach ($activeLanguages as $languageCode) {
                 if (isset($existing[$languageCode])) {
@@ -60,6 +63,9 @@ final class TranslationKeyPropagationListener
             }
         }
 
+        // The nested flush re-fires postPersist/postFlush for the created rows;
+        // that second pass finds full language coverage and creates nothing, so
+        // it terminates after one extra (batched) query.
         if ($created) {
             $em->flush();
         }

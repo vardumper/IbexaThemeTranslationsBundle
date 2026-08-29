@@ -42,11 +42,25 @@ class TranslationDraftRepository extends ServiceEntityRepository
     }
 
     /**
-     * Returns a map of [transKey => TranslationDraft] for a set of translation IDs.
-     * Used to efficiently look up drafts for an entire list page.
+     * Bulk-deletes all drafts for a language. Bypasses entity listeners on purpose —
+     * callers are responsible for any required cache invalidation.
+     */
+    public function deleteByLanguageCode(string $languageCode): void
+    {
+        $this->createQueryBuilder('d')
+            ->delete()
+            ->where('d.languageCode = :languageCode')
+            ->setParameter('languageCode', $languageCode)
+            ->getQuery()
+            ->execute();
+    }
+
+    /**
+     * Returns a map of [transKey => [languageCode => TranslationDraft]] for a set of keys.
+     * Used to efficiently look up drafts for an entire list page in one query.
      *
      * @param string[] $transKeys
-     * @return array<string, TranslationDraft[]> keyed by transKey
+     * @return array<string, array<string, TranslationDraft>> keyed by transKey, then languageCode
      */
     public function findIndexedByTransKey(array $transKeys): array
     {

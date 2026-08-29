@@ -1,3 +1,4 @@
 /vendor/
 /coverage-report/cghooks.lock
 /coverage-report/
+/.dsh

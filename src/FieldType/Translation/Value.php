@@ -8,7 +8,9 @@ use Ibexa\Contracts\Core\FieldType\Value as ValueInterface;
 
 final class Value implements ValueInterface
 {
-    private int $id;
+    // Nullable + initialized: a fresh Value (e.g. from form submission, which has no id field)
+    // must not fatal when getId() is called before setId().
+    private ?int $id = null;
     private ?string $transKey = null;
     private ?string $languageCode = null;
     private ?string $translation = null;
@@ -18,7 +20,7 @@ final class Value implements ValueInterface
         return $this->translation ?? '';
     }
 
-    public function getId(): int
+    public function getId(): ?int
     {
         return $this->id;
     }

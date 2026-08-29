@@ -23,5 +23,10 @@ final class IbexaThemeTranslationsExtension extends Extension
 
         $loader = new YamlFileLoader($container, new FileLocator(\dirname(__DIR__, 2) . '/config'));
         $loader->load('services.yaml');
+
+        // The Redis tier needs a Redis adapter in the host app; only register it when enabled.
+        if ($config['redis']['enabled']) {
+            $loader->load('services.redis.yaml');
+        }
     }
 }

@@ -59,3 +59,30 @@ it('respects config overrides passed to load()', function () {
     expect($container->getParameter('ibexa_theme_translations.redis.enabled'))->toBeFalse();
     expect($container->getParameter('ibexa_theme_translations.redis.prefix'))->toBe('custom');
 });
+
+it('registers the Redis cache services when redis is enabled (default)', function () {
+    $container = makeContainer();
+    (new IbexaThemeTranslationsExtension())->load([], $container);
+
+    // A usable definition: not tagged "container.excluded" and wired to the dedicated pool.
+    expect($container->hasDefinition('vardumper\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache'))->toBeTrue()
+        ->and($container->getDefinition('vardumper\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache')->hasTag('container.excluded'))->toBeFalse()
+        ->and($container->hasDefinition('cache.ibexa_theme_translations'))->toBeTrue();
+});
+
+it('does not register usable Redis cache services when redis is disabled', function () {
+    $container = makeContainer();
+    (new IbexaThemeTranslationsExtension())->load(
+        [['redis' => ['enabled' => false]]],
+        $container
+    );
+
+    // The dedicated pool must be absent entirely.
+    expect($container->hasDefinition('cache.ibexa_theme_translations'))->toBeFalse();
+
+    // RedisTranslationCache may only exist as a "container.excluded" placeholder, which the
+    // compiler drops — so TranslationService's nullable autowired argument resolves to null.
+    $redisDefined = $container->hasDefinition('vardumper\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache');
+    expect($redisDefined ? $container->getDefinition('vardumper\IbexaThemeTranslationsBundle\Cache\RedisTranslationCache')->hasTag('container.excluded') : true)
+        ->toBeTrue();
+});

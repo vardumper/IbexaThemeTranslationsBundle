@@ -87,6 +87,10 @@ final class Deepl implements ClientInterface
 
     public function translate(string $payload, ?string $from, string $to): string
     {
+        if ($this->authKey === '') {
+            throw new ClientNotConfiguredException('DeepL authKey is not configured.');
+        }
+
         $baseUri = str_ends_with($this->authKey, ':fx') ? self::API_FREE : self::API_PRO; /* free keys end with ':fx', pro keys have no suffix */
 
         $parameters = [
@@ -111,12 +115,18 @@ final class Deepl implements ClientInterface
             ? ($this->httpClientFactory)($clientConfig)
             : new Client($clientConfig);
 
+        // Guzzle throws RequestException on 4xx/5xx by default (e.g. quota errors).
         $response = $http->post('/v2/translate', [
             'form_params' => $parameters,
         ]);
-        $json = json_decode($response->getBody()->getContents());
 
-        return $json->translations[0]->text;
+        $contents = (string) $response->getBody()->getContents();
+        $json = json_decode($contents);
+        if (!\is_object($json) || !isset($json->translations[0]->text)) {
+            throw new \RuntimeException('DeepL returned an unexpected response: ' . mb_substr($contents, 0, 200));
+        }
+
+        return (string) $json->translations[0]->text;
     }
 
     public function supportsLanguage(string $languageCode): bool

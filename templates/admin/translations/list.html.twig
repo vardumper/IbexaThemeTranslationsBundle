@@ -132,14 +132,16 @@
                         <use xlink:href="{{ ibexa_icon_path('edit') }}"></use>
                     </svg>
                 </a>
-                <a class="btn ibexa-btn ibexa-btn--ghost ibexa-btn--content-delete"
-                    href="{{ path('ibexa_theme_translations.delete', { 'id': translation.id }) }}"
-                    title="Delete Translation"
-                    onclick="return confirm('Are you sure you want to delete this translation?')">
-                    <svg class="ibexa-icon ibexa-icon--small ibexa-icon--delete">
-                        <use xlink:href="{{ ibexa_icon_path('trash') }}"></use>
-                    </svg>
-                </a>
+                {# Delete is a POST form with CSRF token — state-changing actions must not be plain links #}
+                <form action="{{ path('ibexa_theme_translations.delete', { 'id': translation.id }) }}" method="post"
+                      onsubmit="return confirm('Are you sure you want to delete this translation?');" style="display:inline;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('translations_delete') }}">
+                    <button type="submit" class="btn ibexa-btn ibexa-btn--ghost ibexa-btn--content-delete" title="Delete Translation">
+                        <svg class="ibexa-icon ibexa-icon--small ibexa-icon--delete">
+                            <use xlink:href="{{ ibexa_icon_path('trash') }}"></use>
+                        </svg>
+                    </button>
+                </form>
             {% endset %}
 
             {% set col_language %}
@@ -236,6 +238,25 @@
     // URL templates for dynamically created drafts (ID 0 is replaced in JS)
     var DEEPL_DRAFT_ACCEPT_TMPL = '{{ path('ibexa_theme_translations.draft_accept', {'id': 0}) }}';
     var DEEPL_DRAFT_REVERT_TMPL = '{{ path('ibexa_theme_translations.draft_revert', {'id': 0}) }}';
+
+    // CSRF tokens for the JSON endpoints (validated server-side)
+    var CSRF_TOKENS = {
+        save:   '{{ csrf_token('translations_inline_save') }}',
+        accept: '{{ csrf_token('translations_draft_accept') }}',
+        revert: '{{ csrf_token('translations_draft_revert') }}',
+        deepl:  '{{ csrf_token('translations_deepl_translate') }}'
+    };
+
+    function postJson(url, token, payload) {
+        return fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(Object.assign({ _token: token }, payload || {}))
+        });
+    }
 
     (function () {
         var STORAGE_KEY = 'ibexa_translations_filter';
@@ -369,10 +390,7 @@
         function handleAccept(cell) {
             var acceptUrl = cell.dataset.acceptUrl;
             if (!acceptUrl) return;
-            fetch(acceptUrl, {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            }).then(function (r) { return r.json(); }).then(function (data) {
+            postJson(acceptUrl, CSRF_TOKENS.accept).then(function (r) { return r.json(); }).then(function (data) {
                 if (data.success) {
                     // Move draft text to normal, hide draft section
                     var pendingDiv = cell.querySelector('.draft-cell__pending');
@@ -400,10 +418,7 @@
         function handleRevert(cell) {
             var revertUrl = cell.dataset.revertUrl;
             if (!revertUrl) return;
-            fetch(revertUrl, {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            }).then(function (r) { return r.json(); }).then(function (data) {
+            postJson(revertUrl, CSRF_TOKENS.revert).then(function (r) { return r.json(); }).then(function (data) {
                 if (data.success) {
                     var pendingDiv = cell.querySelector('.draft-cell__pending');
                     var normalDiv  = cell.querySelector('.draft-cell__normal');
@@ -511,14 +526,7 @@
                     return;
                 }
 
-                fetch(saveUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({ translation: newValue })
-                }).then(function (res) {
+                postJson(saveUrl, CSRF_TOKENS.save, { translation: newValue }).then(function (res) {
                     isSaving = false;
                     if (res.ok) {
                         cell.dataset.original   = newValue;
@@ -564,13 +572,7 @@
                 btn.disabled = true;
                 btn.innerHTML = '&#8230;';
 
-                var fetchHeaders = { 'X-Requested-With': 'XMLHttpRequest' };
-                console.log('[DeepL] POST', url, { headers: fetchHeaders, body: null });
-
-                fetch(url, {
-                    method: 'POST',
-                    headers: fetchHeaders
-                }).then(function (r) { return r.json(); }).then(function (data) {
+                postJson(url, CSRF_TOKENS.deepl).then(function (r) { return r.json(); }).then(function (data) {
                     btn.disabled = false;
                     btn.innerHTML = origHTML;
                     if (data.success && cell) {

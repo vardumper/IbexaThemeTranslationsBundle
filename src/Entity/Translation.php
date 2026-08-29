@@ -11,11 +11,13 @@ use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 
 #[ORM\Entity(repositoryClass: TranslationRepository::class)]
 #[ORM\Table(name: 'translation')]
-#[ORM\Index(columns: ['language_code', 'trans_key'], name: 'language_code_trans_key_idx')]
+// DB-level uniqueness (see flex/recipe/migrations/Version20260828073000.php) — the validator alone
+// cannot prevent duplicates created by concurrent requests.
+#[ORM\UniqueConstraint(name: 'translation_language_code_trans_key_uniq', columns: ['language_code', 'trans_key'])]
 #[ORM\Index(columns: ['translation'], name: 'translation_idx')]
 #[UniqueEntity(
     fields: ['languageCode', 'transKey'],
-    errorPath: 'language_code',
+    errorPath: 'transKey',
     message: 'This key already exists.',
 )]
 class Translation implements \JsonSerializable
@@ -53,7 +55,15 @@ class Translation implements \JsonSerializable
 
     public static function fromArray(array $translation): self
     {
-        $entity = new self($translation['languageCode'], $translation['transKey'], $translation['translation']);
+        if (!isset($translation['languageCode'], $translation['transKey']) || $translation['languageCode'] === '' || $translation['transKey'] === '') {
+            throw new \InvalidArgumentException('Translation array must contain non-empty languageCode and transKey.');
+        }
+
+        $entity = new self(
+            (string) $translation['languageCode'],
+            (string) $translation['transKey'],
+            isset($translation['translation']) ? (string) $translation['translation'] : null,
+        );
         if (isset($translation['id'])) {
             $entity->setId((int) $translation['id']);
         }

@@ -45,14 +45,27 @@ final class TranslationCacheWarmer
     }
 
     /**
-     * Warm all cache tiers for all known languages.
+     * Invalidate all cache tiers for a single language without re-warming.
+     * Use when the data no longer exists (e.g. the language was deleted).
+     */
+    public function invalidateLanguage(string $languageCode): void
+    {
+        foreach ($this->caches as $cache) {
+            $cache->invalidateLanguage($languageCode);
+        }
+    }
+
+    /**
+     * Warm all cache tiers for all known languages, loading everything in one query.
      */
     public function warmAll(): void
     {
-        $languageCodes = $this->repository->findAllLanguageCodes();
+        $grouped = $this->repository->findAllGroupedByLanguage();
 
-        foreach ($languageCodes as $languageCode) {
-            $this->warmLanguage($languageCode);
+        foreach ($grouped as $languageCode => $translations) {
+            foreach ($this->caches as $cache) {
+                $cache->warmLanguage($languageCode, $translations);
+            }
         }
     }
 

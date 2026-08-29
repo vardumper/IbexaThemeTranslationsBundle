@@ -32,7 +32,7 @@ final class TranslationFilterType extends AbstractType
             'required' => false,
             'choices' => $languages,
             'attr' => [
-                'styles' => 'margin-right:10px;',
+                'style' => 'margin-right:10px;',
             ],
         ]);
 
@@ -46,7 +46,7 @@ final class TranslationFilterType extends AbstractType
                 'Pending Approval' => 'pending',
             ],
             'attr' => [
-                'styles' => 'margin-right:10px;',
+                'style' => 'margin-right:10px;',
             ],
         ]);
 

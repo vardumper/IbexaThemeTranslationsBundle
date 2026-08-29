@@ -115,6 +115,24 @@
 
     <script>
     (function () {
+        // CSRF tokens for the JSON endpoints (validated server-side)
+        var CSRF_TOKENS = {
+            accept: '{{ csrf_token('translations_draft_accept') }}',
+            revert: '{{ csrf_token('translations_draft_revert') }}',
+            deepl:  '{{ csrf_token('translations_deepl_translate') }}'
+        };
+
+        function postJson(url, token) {
+            return fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ _token: token })
+            });
+        }
+
         var section   = document.getElementById('draft-section');
         var textEl    = document.getElementById('draft-translation-text');
         var acceptBtn = document.getElementById('btn-accept-draft');
@@ -144,10 +162,7 @@
                 var url = section.dataset.acceptUrl;
                 if (!url) return;
                 acceptBtn.disabled = true;
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                }).then(function (r) { return r.json(); }).then(function (data) {
+                postJson(url, CSRF_TOKENS.accept).then(function (r) { return r.json(); }).then(function (data) {
                     acceptBtn.disabled = false;
                     if (data.success) {
                         // Update the translation textarea with the accepted value
@@ -168,10 +183,7 @@
                 var url = section.dataset.revertUrl;
                 if (!url) return;
                 revertBtn.disabled = true;
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                }).then(function (r) { return r.json(); }).then(function (data) {
+                postJson(url, CSRF_TOKENS.revert).then(function (r) { return r.json(); }).then(function (data) {
                     revertBtn.disabled = false;
                     if (data.success) {
                         hideDraft();
@@ -192,10 +204,7 @@
                 deeplBtn.disabled = true;
                 deeplBtn.innerHTML = '…';
 
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                }).then(function (r) { return r.json(); }).then(function (data) {
+                postJson(url, CSRF_TOKENS.deepl).then(function (r) { return r.json(); }).then(function (data) {
                     deeplBtn.disabled = false;
                     deeplBtn.innerHTML = origHTML;
                     if (data.success) {

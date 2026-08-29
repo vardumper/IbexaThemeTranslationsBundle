@@ -23,7 +23,7 @@ ibexa_theme_translations.edit:
 
 ibexa_theme_translations.delete:
     path: /manage-translations/delete/{id}
-    methods: ['GET']
+    methods: ['POST'] # POST + CSRF token: state-changing actions must not be reachable via plain links (CSRF)
     defaults:
         _controller: 'vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController::deleteAction'
     requirements:

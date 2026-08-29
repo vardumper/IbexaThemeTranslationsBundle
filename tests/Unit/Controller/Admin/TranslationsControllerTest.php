@@ -13,6 +13,9 @@ use Symfony\Component\Form\FormView;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer;
 use vardumper\IbexaThemeTranslationsBundle\Controller\Admin\TranslationsController;
 use vardumper\IbexaThemeTranslationsBundle\Entity\Translation;
 use vardumper\IbexaThemeTranslationsBundle\Entity\TranslationDraft;
@@ -49,6 +52,21 @@ function deeplConfigured(string $returnValue = '<deepl>Hallo</deepl>'): DeeplTra
     return new DeeplTranslationService($localeConverter, $provider);
 }
 
+/** CSRF manager that accepts every token (default) — pass $valid=false to simulate rejection. */
+function makeCsrfManager(bool $valid = true): CsrfTokenManagerInterface
+{
+    $manager = testMock(CsrfTokenManagerInterface::class);
+    $manager->method('isTokenValid')->willReturn($valid);
+
+    return $manager;
+}
+
+/** POST request carrying a CSRF token in the "_token" parameter. */
+function csrfRequest(string $tokenId = 'test'): Request
+{
+    return new Request([], ['_token' => 'token-' . $tokenId]);
+}
+
 function makeController(
     ?TranslationRepository $repo = null,
     ?TranslationDraftRepository $draftRepo = null,
@@ -57,6 +75,8 @@ function makeController(
     ?LanguageResolverInterface $resolver = null,
     ?LanguageService $languageService = null,
     ?DeeplTranslationService $deepl = null,
+    ?TranslationCacheWarmer $cacheWarmer = null,
+    ?CsrfTokenManagerInterface $csrfManager = null,
 ): TranslationsController {
     return new TranslationsController(
         $repo ?? testMock(TranslationRepository::class),
@@ -66,6 +86,8 @@ function makeController(
         $resolver ?? testMock(LanguageResolverInterface::class),
         $languageService ?? testMock(LanguageService::class),
         $deepl ?? deeplNotConfigured(),
+        $cacheWarmer ?? makeCacheWarmer(),
+        $csrfManager ?? makeCsrfManager(),
     );
 }
 
@@ -87,7 +109,8 @@ it('listAction executes filtering/pagination flow then fails on render without c
     $formFactory->method('createNamed')->willReturn($form);
 
     $repo = $this->createMock(TranslationRepository::class);
-    $repo->method('findByFilter')->willReturn([
+    $repo->method('countByFilter')->willReturn(2);
+    $repo->method('findPagedByFilter')->willReturn([
         new Translation('eng-GB', 'hello.key', 'Hello'),
         new Translation('deu-DE', 'hello.key', 'Hallo'),
     ]);
@@ -126,7 +149,8 @@ it('listAction accepts numeric string page and does not fail with TypeError', fu
     $formFactory->method('createNamed')->willReturn($form);
 
     $repo = $this->createMock(TranslationRepository::class);
-    $repo->method('findByFilter')->willReturn([
+    $repo->method('countByFilter')->willReturn(1);
+    $repo->method('findPagedByFilter')->willReturn([
         new Translation('eng-GB', 'hello.key', 'Hello'),
     ]);
 
@@ -257,7 +281,10 @@ it('importAction merge mode updates existing records and then fails on redirect 
 
     $existing = new Translation('eng-GB', 'import.key', 'Old');
     $repo = $this->createMock(TranslationRepository::class);
-    $repo->method('findOneBy')->willReturn($existing);
+    // One batched lookup for all existing rows in scope (replaces the old per-row findOneBy).
+    $repo->method('findByTransKeysAndLanguages')
+        ->with(['import.key'], ['eng-GB'])
+        ->willReturn([$existing]);
 
     $em = $this->createMock(EntityManagerInterface::class);
     $em->expects($this->exactly(2))->method('persist')->with($existing);
@@ -271,14 +298,59 @@ it('importAction merge mode updates existing records and then fails on redirect 
     expect(file_exists($tmp))->toBeFalse();
 });
 
+it('importAction truncate mode clears all cache tiers and truncates before inserting', function () {
+    $tmp = tempnam(sys_get_temp_dir(), 'tt_csv_');
+    file_put_contents($tmp, "id;transKey;languageCode;translation\n1;new.key;eng-GB;Fresh\n");
+    $uploaded = new UploadedFile($tmp, 'translations.csv', null, null, true);
+
+    $csvField = $this->createMock(FormInterface::class);
+    $csvField->method('getData')->willReturn($uploaded);
+
+    $form = $this->createMock(FormInterface::class);
+    $form->method('handleRequest')->willReturnSelf();
+    $form->method('isSubmitted')->willReturn(true);
+    $form->method('isValid')->willReturn(true);
+    $form->method('getData')->willReturn(['mode' => 'truncate']);
+    $form->method('get')->with('csv')->willReturn($csvField);
+
+    $formFactory = $this->createMock(FormFactoryInterface::class);
+    $formFactory->method('createNamed')->willReturn($form);
+
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->expects($this->once())->method('truncate');
+    $repo->method('findByTransKeysAndLanguages')->willReturn([]);
+
+    $em = $this->createMock(EntityManagerInterface::class);
+    $em->expects($this->once())
+        ->method('persist')
+        ->with($this->callback(static fn ($e): bool => $e instanceof Translation && $e->getTransKey() === 'new.key'));
+    $em->expects($this->once())->method('flush');
+    $em->expects($this->once())->method('clear');
+
+    $controller = makeController(repo: $repo, formFactory: $formFactory, em: $em);
+
+    expect(fn () => $controller->importAction(Request::create('/', 'POST')))->toThrow(Error::class);
+    expect(file_exists($tmp))->toBeFalse();
+});
+
 // ─── deleteAction ─────────────────────────────────────────────────────────────
 
 it('deleteAction returns 404 when id is null', function () {
     $controller = makeController();
-    $response = $controller->deleteAction(null);
+    $response = $controller->deleteAction(new Request(), null);
 
     expect($response->getStatusCode())->toBe(404);
     expect($response->getContent())->toContain('No id provided');
+});
+
+it('deleteAction returns 403 when the CSRF token is invalid', function () {
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->expects($this->never())->method('find');
+
+    $controller = makeController(repo: $repo, csrfManager: makeCsrfManager(valid: false));
+    $response = $controller->deleteAction(csrfRequest(), 1);
+
+    expect($response->getStatusCode())->toBe(403);
 });
 
 it('deleteAction removes entity and then attempts redirect', function () {
@@ -295,14 +367,24 @@ it('deleteAction removes entity and then attempts redirect', function () {
     $controller = makeController(repo: $repo, em: $em);
 
     // Redirect generation needs framework services that are not booted in this unit test.
-    expect(fn () => $controller->deleteAction(1))->toThrow(Error::class);
+    expect(fn () => $controller->deleteAction(csrfRequest(), 1))->toThrow(Error::class);
 });
 
 // ─── deeplTranslateAction ────────────────────────────────────────────────────
 
+it('deeplTranslateAction returns 403 when the CSRF token is invalid', function () {
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->expects($this->never())->method('find');
+
+    $controller = makeController(repo: $repo, csrfManager: makeCsrfManager(valid: false));
+    $response = $controller->deeplTranslateAction(csrfRequest(), 1);
+
+    expect($response->getStatusCode())->toBe(Response::HTTP_FORBIDDEN);
+});
+
 it('deeplTranslateAction returns 503 when DeepL is not configured', function () {
     $controller = makeController(deepl: deeplNotConfigured());
-    $response = $controller->deeplTranslateAction(new Request(), 1);
+    $response = $controller->deeplTranslateAction(csrfRequest(), 1);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_SERVICE_UNAVAILABLE);
     $data = json_decode($response->getContent(), true);
@@ -314,7 +396,7 @@ it('deeplTranslateAction returns 404 when translation entity is not found', func
     $repo->method('find')->with(99)->willReturn(null);
 
     $controller = makeController(repo: $repo, deepl: deeplConfigured());
-    $response = $controller->deeplTranslateAction(new Request(), 99);
+    $response = $controller->deeplTranslateAction(csrfRequest(), 99);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_NOT_FOUND);
     $data = json_decode($response->getContent(), true);
@@ -329,7 +411,7 @@ it('deeplTranslateAction returns 422 when no source translation exists for the k
     $repo->method('findByTransKey')->willReturn([$entity]);
 
     $controller = makeController(repo: $repo, deepl: deeplConfigured());
-    $response = $controller->deeplTranslateAction(new Request(), 1);
+    $response = $controller->deeplTranslateAction(csrfRequest(), 1);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_UNPROCESSABLE_ENTITY);
     $data = json_decode($response->getContent(), true);
@@ -360,7 +442,7 @@ it('deeplTranslateAction returns 502 when DeepL throws an exception', function (
     $draftRepo->method('findOneByKeyAndLanguage')->willReturn(null);
 
     $controller = makeController(repo: $repo, draftRepo: $draftRepo, deepl: $deepl);
-    $response = $controller->deeplTranslateAction(new Request(), 1);
+    $response = $controller->deeplTranslateAction(csrfRequest(), 1);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_BAD_GATEWAY);
     $data = json_decode($response->getContent(), true);
@@ -383,7 +465,7 @@ it('deeplTranslateAction creates a new draft on success', function () {
     $em->expects($this->once())->method('flush');
 
     $controller = makeController(repo: $repo, draftRepo: $draftRepo, em: $em, deepl: deeplConfigured());
-    $response = $controller->deeplTranslateAction(new Request(), 1);
+    $response = $controller->deeplTranslateAction(csrfRequest(), 1);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_OK);
     $data = json_decode($response->getContent(), true);
@@ -408,7 +490,7 @@ it('deeplTranslateAction updates an existing draft on success', function () {
     $em->expects($this->once())->method('flush');
 
     $controller = makeController(repo: $repo, draftRepo: $draftRepo, em: $em, deepl: deeplConfigured());
-    $response = $controller->deeplTranslateAction(new Request(), 1);
+    $response = $controller->deeplTranslateAction(csrfRequest(), 1);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_OK);
     $data = json_decode($response->getContent(), true);
@@ -422,7 +504,7 @@ it('acceptDraftAction returns 404 when draft is not found', function () {
     $draftRepo->method('find')->with(99)->willReturn(null);
 
     $controller = makeController(draftRepo: $draftRepo);
-    $response = $controller->acceptDraftAction(99);
+    $response = $controller->acceptDraftAction(csrfRequest(), 99);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_NOT_FOUND);
     $data = json_decode($response->getContent(), true);
@@ -444,7 +526,7 @@ it('acceptDraftAction creates a new Translation when none exists and removes the
     $em->expects($this->once())->method('flush');
 
     $controller = makeController(repo: $repo, draftRepo: $draftRepo, em: $em);
-    $response = $controller->acceptDraftAction(1);
+    $response = $controller->acceptDraftAction(csrfRequest(), 1);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_OK);
     $data = json_decode($response->getContent(), true);
@@ -468,7 +550,7 @@ it('acceptDraftAction updates an existing Translation entity', function () {
     $em->expects($this->once())->method('flush');
 
     $controller = makeController(repo: $repo, draftRepo: $draftRepo, em: $em);
-    $response = $controller->acceptDraftAction(1);
+    $response = $controller->acceptDraftAction(csrfRequest(), 1);
 
     $data = json_decode($response->getContent(), true);
     expect($data['translation'])->toBe('Neu');
@@ -482,7 +564,7 @@ it('revertDraftAction returns 404 when draft is not found', function () {
     $draftRepo->method('find')->with(99)->willReturn(null);
 
     $controller = makeController(draftRepo: $draftRepo);
-    $response = $controller->revertDraftAction(99);
+    $response = $controller->revertDraftAction(csrfRequest(), 99);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_NOT_FOUND);
     $data = json_decode($response->getContent(), true);
@@ -500,7 +582,7 @@ it('revertDraftAction removes the draft and returns success', function () {
     $em->expects($this->once())->method('flush');
 
     $controller = makeController(draftRepo: $draftRepo, em: $em);
-    $response = $controller->revertDraftAction(1);
+    $response = $controller->revertDraftAction(csrfRequest(), 1);
 
     expect($response->getStatusCode())->toBe(Response::HTTP_OK);
     $data = json_decode($response->getContent(), true);
@@ -509,8 +591,21 @@ it('revertDraftAction removes the draft and returns success', function () {
 
 // ─── inlineSaveAction ────────────────────────────────────────────────────────
 
+it('inlineSaveAction returns 403 when no CSRF token is provided', function () {
+    $request = Request::create('/', 'POST', [], [], [], [], json_encode(['translation' => 'Hallo']));
+    $request->headers->set('Content-Type', 'application/json');
+
+    $repo = $this->createMock(TranslationRepository::class);
+    $repo->expects($this->never())->method('find');
+
+    $controller = makeController(repo: $repo);
+    $response = $controller->inlineSaveAction($request, 1);
+
+    expect($response->getStatusCode())->toBe(Response::HTTP_FORBIDDEN);
+});
+
 it('inlineSaveAction returns 400 when translation is missing from body', function () {
-    $request = Request::create('/', 'POST', [], [], [], [], json_encode([]));
+    $request = Request::create('/', 'POST', [], [], [], [], json_encode(['_token' => 'test']));
     $request->headers->set('Content-Type', 'application/json');
 
     $controller = makeController();
@@ -522,7 +617,7 @@ it('inlineSaveAction returns 400 when translation is missing from body', functio
 });
 
 it('inlineSaveAction returns 404 when translation entity is not found', function () {
-    $request = Request::create('/', 'POST', [], [], [], [], json_encode(['translation' => 'Hallo']));
+    $request = Request::create('/', 'POST', [], [], [], [], json_encode(['_token' => 'test', 'translation' => 'Hallo']));
     $request->headers->set('Content-Type', 'application/json');
 
     $repo = $this->createMock(TranslationRepository::class);
@@ -537,7 +632,7 @@ it('inlineSaveAction returns 404 when translation entity is not found', function
 });
 
 it('inlineSaveAction updates the entity and returns success', function () {
-    $request = Request::create('/', 'POST', [], [], [], [], json_encode(['translation' => 'Hallo Welt']));
+    $request = Request::create('/', 'POST', [], [], [], [], json_encode(['_token' => 'test', 'translation' => 'Hallo Welt']));
     $request->headers->set('Content-Type', 'application/json');
 
     $entity = new Translation('deu-DE', 'my.key', 'Old');
@@ -560,19 +655,39 @@ it('inlineSaveAction updates the entity and returns success', function () {
 
 // ─── exportAction ────────────────────────────────────────────────────────────
 
-it('exportAction returns a CSV response with correct headers', function () {
-    $t1 = new Translation('eng-GB', 'hello', 'Hello');
-    $t2 = new Translation('deu-DE', 'hello', 'Hallo');
+it('exportAction returns a streamed CSV response with correct headers', function () {
+    // Anonymous Query subclass (parent ctor needs an EM) that emulates ORM 3.1+'s
+    // onEachResult() so the controller's row-mapping logic runs without a database.
+    $query = new class extends Doctrine\ORM\Query {
+        public function __construct()
+        {
+            // Intentionally skip parent constructor for pure unit testing.
+        }
+
+        public function onEachResult(callable $callback): void
+        {
+            $callback(['id' => 1, 'transKey' => 'hello', 'languageCode' => 'eng-GB', 'translation' => 'Hello']);
+        }
+    };
 
     $repo = $this->createMock(TranslationRepository::class);
-    $repo->method('findAll')->willReturn([$t1, $t2]);
+    $repo->method('createExportQuery')->willReturn($query);
 
     $controller = makeController(repo: $repo);
     $response = $controller->exportAction();
 
-    expect($response->getStatusCode())->toBe(Response::HTTP_OK);
-    expect($response->headers->get('Content-type'))->toBe('text/csv');
-    expect($response->headers->get('Content-Disposition'))->toContain('attachment');
-    expect($response->getContent())->toContain('transKey');
-    expect($response->getContent())->toContain('languageCode');
+    expect($response)->toBeInstanceOf(StreamedResponse::class)
+        ->and($response->getStatusCode())->toBe(Response::HTTP_OK)
+        ->and($response->headers->get('Content-Type'))->toBe('text/csv')
+        ->and($response->headers->get('Cache-Control'))->toBe('private')
+        ->and($response->headers->get('Content-Disposition'))->toContain('attachment');
+
+    // The streamed body writes to php://output — capture it while sending.
+    ob_start();
+    $response->sendContent();
+    $content = (string) ob_get_clean();
+
+    expect($content)->toContain('transKey')
+        ->and($content)->toContain('languageCode')
+        ->and($content)->toContain('hello');
 });

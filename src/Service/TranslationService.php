@@ -11,9 +11,24 @@ use vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository;
 
 final class TranslationService implements TranslationServiceInterface
 {
+    /**
+     * Keys already known to be missing from the database during this request.
+     * Prevents repeated DB lookups and cache re-warms for the same missing key.
+     *
+     * @var array<string, true>
+     */
+    private array $knownMissing = [];
+
+    /**
+     * Languages whose caches were already (re)warmed during this request.
+     *
+     * @var array<string, true>
+     */
+    private array $warmedLanguages = [];
+
     public function __construct(
         private readonly StaticArrayTranslationCache $staticCache,
-        private readonly RedisTranslationCache $redisCache,
+        private readonly ?RedisTranslationCache $redisCache,
         private readonly TranslationRepository $repository,
         private readonly TranslationCacheWarmer $warmer,
     ) {
@@ -26,13 +41,34 @@ final class TranslationService implements TranslationServiceInterface
             return $value;
         }
 
-        $value = $this->redisCache->get($languageCode, $transKey); /* tier 2: Redis */
-        if ($value !== null) {
-            return $value;
+        if ($this->redisCache !== null) {
+            $value = $this->redisCache->get($languageCode, $transKey); /* tier 2: Redis */
+            if ($value !== null) {
+                return $value;
+            }
         }
 
-        $value = $this->repository->translate($transKey, $languageCode); /* tier 3: DB (source of truth) */
-        $this->warmer->warmLanguage($languageCode); /* warm all tiers on DB hit */
+        // A key already proven missing in this request costs nothing more.
+        $missId = $languageCode . "\0" . $transKey;
+        if (isset($this->knownMissing[$missId])) {
+            return $transKey;
+        }
+
+        $value = $this->repository->translateOrNull($transKey, $languageCode); /* tier 3: DB (source of truth) */
+
+        if ($value === null) {
+            // No row exists. Remember it for this request and do NOT re-warm the
+            // caches — warming only ever writes existing rows, so a missing key
+            // would miss again on every subsequent request otherwise.
+            $this->knownMissing[$missId] = true;
+
+            return $transKey;
+        }
+
+        if (!isset($this->warmedLanguages[$languageCode])) {
+            $this->warmedLanguages[$languageCode] = true;
+            $this->warmer->warmLanguage($languageCode); /* warm all tiers once per language per request, on a real hit */
+        }
 
         return $value;
     }

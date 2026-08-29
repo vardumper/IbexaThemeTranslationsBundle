@@ -20,6 +20,10 @@ final class TranslationRuntime implements RuntimeExtensionInterface
     /**
      * @tutorial {{ 'key'|l10n }} translates a key into the current language
      * @tutorial {{ 'key'|l10n('deu-DE') }} translates a key into the given language
+     *
+     * Missing-key semantics (intentional):
+     * - No row exists for the key            → the raw key is rendered (visible "missing" marker).
+     * - Row exists but translation is empty  → falls back to the default language when possible.
      */
     public function l10n(string $key, string $overrideLanguageCode = ''): string
     {

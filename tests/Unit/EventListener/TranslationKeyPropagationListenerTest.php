@@ -30,7 +30,10 @@ it('ignores postPersist events for non-Translation entities', function () {
 
 it('queues the trans key on postPersist for Translation entities', function () {
     $repo = $this->createMock(TranslationRepository::class);
-    $repo->method('findLanguageCodesForKey')->with('hello')->willReturn(['eng-GB']);
+    // One batched lookup: 'hello' only exists in eng-GB.
+    $repo->method('findLanguageCodesForKeys')
+        ->with(['hello'])
+        ->willReturn(['hello' => ['eng-GB']]);
 
     $resolver = $this->createMock(LanguageResolverInterface::class);
     $resolver->method('getUsedLanguages')->willReturn(['eng-GB', 'deu-DE']);
@@ -62,7 +65,9 @@ it('postFlush is a no-op when no keys are pending', function () {
 
 it('does not persist a stub when all active languages already have the key', function () {
     $repo = $this->createMock(TranslationRepository::class);
-    $repo->method('findLanguageCodesForKey')->willReturn(['eng-GB', 'deu-DE']);
+    $repo->method('findLanguageCodesForKeys')
+        ->with(['hello'])
+        ->willReturn(['hello' => ['eng-GB', 'deu-DE']]);
 
     $resolver = $this->createMock(LanguageResolverInterface::class);
     $resolver->method('getUsedLanguages')->willReturn(['eng-GB', 'deu-DE']);

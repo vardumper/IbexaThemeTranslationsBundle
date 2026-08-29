@@ -71,6 +71,18 @@ function testMock(string $class): PHPUnit\Framework\MockObject\MockObject
     }
     return $factory->mock($class);
 }
+
+/**
+ * Build a real TranslationCacheWarmer (final class — cannot be mocked) with no cache tiers.
+ */
+function makeCacheWarmer(): vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer
+{
+    return new vardumper\IbexaThemeTranslationsBundle\Cache\TranslationCacheWarmer(
+        testMock(vardumper\IbexaThemeTranslationsBundle\Repository\TranslationRepository::class),
+        []
+    );
+}
+
 /**
  * Bootstrap a fresh in-memory SQLite EntityManager (with schema) for each call.
  * Fast enough for unit tests since SQLite in-memory creation is ~<5 ms.

@@ -26,13 +26,14 @@ function makeTranslationRepo(QueryBuilder $qb): TranslationRepository
     };
 }
 
-function makeQbWithQuery(array $result = [], array $scalarResult = [], mixed $oneOrNull = null, int $execute = 1): array
+function makeQbWithQuery(array $result = [], array $scalarResult = [], mixed $oneOrNull = null, int $execute = 1, mixed $singleScalar = 0): array
 {
-    $query = testMock(Doctrine\ORM\AbstractQuery::class);
+    $query = testMock(Doctrine\ORM\Query::class);
     $query->method('getResult')->willReturn($result);
     $query->method('getScalarResult')->willReturn($scalarResult);
     $query->method('getOneOrNullResult')->willReturn($oneOrNull);
     $query->method('execute')->willReturn($execute);
+    $query->method('getSingleScalarResult')->willReturn($singleScalar);
 
     $expr = testMock(Expr::class);
     $expr->method('exists')->willReturn('EXISTS_SUBQUERY');
@@ -43,6 +44,7 @@ function makeQbWithQuery(array $result = [], array $scalarResult = [], mixed $on
     $qb->method('where')->willReturnSelf();
     $qb->method('setParameter')->willReturnSelf();
     $qb->method('setMaxResults')->willReturnSelf();
+    $qb->method('setFirstResult')->willReturnSelf();
     $qb->method('orderBy')->willReturnSelf();
     $qb->method('delete')->willReturnSelf();
     $qb->method('getQuery')->willReturn($query);
@@ -52,10 +54,20 @@ function makeQbWithQuery(array $result = [], array $scalarResult = [], mixed $on
 }
 
 it('translate returns translation from query result', function () {
-    [$qb] = makeQbWithQuery([['translation' => 'Hello']]);
+    [$qb] = makeQbWithQuery([], [['translation' => 'Hello']]);
     $repo = makeTranslationRepo($qb);
 
     expect($repo->translate('hello.key', 'eng-GB'))->toBe('Hello');
+});
+
+it('translateOrNull returns the stored translation or null when no row exists', function () {
+    [$qb] = makeQbWithQuery([], [['translation' => 'Hello']]);
+    $repo = makeTranslationRepo($qb);
+    expect($repo->translateOrNull('hello.key', 'eng-GB'))->toBe('Hello');
+
+    [$qb2] = makeQbWithQuery();
+    $repo2 = makeTranslationRepo($qb2);
+    expect($repo2->translateOrNull('missing.key', 'eng-GB'))->toBeNull();
 });
 
 it('translate falls back to transKey when no row exists', function () {
@@ -99,32 +111,6 @@ it('findAllByLanguageCodeAsKeyValueMap maps null values to empty strings', funct
         'a' => 'A',
         'b' => '',
     ]);
-});
-
-it('findByStatus missing uses the expected where clause', function () {
-    [$qb] = makeQbWithQuery([]);
-    $qb->expects(testMock(PHPUnit\Framework\TestCase::class)->once())
-        ->method('andWhere')
-        ->with("t.translation = '' OR t.translation IS NULL")
-        ->willReturnSelf();
-
-    $repo = makeTranslationRepo($qb);
-    $repo->findByStatus('missing');
-
-    expect(true)->toBeTrue();
-});
-
-it('findByStatus done uses the expected where clause', function () {
-    [$qb] = makeQbWithQuery([]);
-    $qb->expects(testMock(PHPUnit\Framework\TestCase::class)->once())
-        ->method('andWhere')
-        ->with("t.translation != '' OR t.translation IS NOT NULL")
-        ->willReturnSelf();
-
-    $repo = makeTranslationRepo($qb);
-    $repo->findByStatus('done');
-
-    expect(true)->toBeTrue();
 });
 
 it('findByFilter throws on invalid status', function () {
@@ -231,7 +217,7 @@ it('findLanguageCodesForKey returns scalar language codes', function () {
 });
 
 it('findAllLanguageCodes returns distinct language codes', function () {
-    [$qb] = makeQbWithQuery([
+    [$qb] = makeQbWithQuery([], [
         ['languageCode' => 'eng-GB'],
         ['languageCode' => 'deu-DE'],
     ]);
@@ -260,16 +246,15 @@ it('deleteByLanguageCode executes delete query', function () {
     expect(true)->toBeTrue();
 });
 
-it('truncate executes delete and auto-increment reset query', function () {
+it('truncate executes the portable DQL delete (no platform-specific auto-increment reset)', function () {
     [$qb, $query] = makeQbWithQuery([], [], null, 1);
     $query->expects(testMock(PHPUnit\Framework\TestCase::class)->once())->method('execute')->willReturn(1);
 
-    $conn = testMock(Doctrine\DBAL\Connection::class);
-    $conn->expects(testMock(PHPUnit\Framework\TestCase::class)->once())
-        ->method('executeQuery')
-        ->with('ALTER TABLE `translation` AUTO_INCREMENT = 1;');
-
+    // The old MySQL-only "ALTER TABLE ... AUTO_INCREMENT" step is gone: truncate must not
+    // touch the connection at all.
     $em = testMock(EntityManagerInterface::class);
+    $conn = testMock(Doctrine\DBAL\Connection::class);
+    $conn->expects(testMock(PHPUnit\Framework\TestCase::class)->never())->method('executeQuery');
     $em->method('getConnection')->willReturn($conn);
 
     $repo = makeTranslationRepo($qb);
@@ -282,4 +267,81 @@ it('truncate executes delete and auto-increment reset query', function () {
     $repo->truncate();
 
     expect(true)->toBeTrue();
+});
+
+it('findLanguageCodesForKeys maps each key to its language codes in one query', function () {
+    [$qb] = makeQbWithQuery([], [
+        ['transKey' => 'a', 'languageCode' => 'eng-GB'],
+        ['transKey' => 'a', 'languageCode' => 'deu-DE'],
+        ['transKey' => 'b', 'languageCode' => 'fra-FR'],
+    ]);
+    $repo = makeTranslationRepo($qb);
+
+    expect($repo->findLanguageCodesForKeys(['a', 'b']))->toBe([
+        'a' => ['eng-GB', 'deu-DE'],
+        'b' => ['fra-FR'],
+    ]);
+});
+
+it('findLanguageCodesForKeys returns an empty map without querying for no keys', function () {
+    [$qb, $query] = makeQbWithQuery();
+    $query->expects(testMock(PHPUnit\Framework\TestCase::class)->never())->method('getScalarResult');
+    $repo = makeTranslationRepo($qb);
+
+    expect($repo->findLanguageCodesForKeys([]))->toBe([]);
+});
+
+it('findAllGroupedByLanguage groups rows by language', function () {
+    [$qb] = makeQbWithQuery([], [
+        ['languageCode' => 'eng-GB', 'transKey' => 'a', 'translation' => 'A'],
+        ['languageCode' => 'eng-GB', 'transKey' => 'b', 'translation' => null],
+        ['languageCode' => 'deu-DE', 'transKey' => 'a', 'translation' => 'Ä'],
+    ]);
+    $repo = makeTranslationRepo($qb);
+
+    expect($repo->findAllGroupedByLanguage())->toBe([
+        'eng-GB' => ['a' => 'A', 'b' => ''],
+        'deu-DE' => ['a' => 'Ä'],
+    ]);
+});
+
+it('countByFilter returns the scalar count as an int', function () {
+    [$qb] = makeQbWithQuery([], [], null, 1, 42);
+    $repo = makeTranslationRepo($qb);
+
+    expect($repo->countByFilter())->toBe(42);
+});
+
+it('findPagedByFilter applies first/max results to the query', function () {
+    [$qb] = makeQbWithQuery([new Translation('eng-GB', 'k', 'A')]);
+    $qb->expects(testMock(PHPUnit\Framework\TestCase::class)->once())->method('setFirstResult')->with(10);
+    $qb->expects(testMock(PHPUnit\Framework\TestCase::class)->once())->method('setMaxResults')->with(5);
+
+    $repo = makeTranslationRepo($qb);
+    expect($repo->findPagedByFilter('', '', '', 'id', 'ASC', 10, 5))->toHaveCount(1);
+});
+
+it('createExportQuery returns a query ordered by id', function () {
+    [$qb] = makeQbWithQuery();
+    $qb->expects(testMock(PHPUnit\Framework\TestCase::class)->once())->method('orderBy')->with('t.id', 'ASC');
+
+    $repo = makeTranslationRepo($qb);
+    expect($repo->createExportQuery())->toBeInstanceOf(Doctrine\ORM\Query::class);
+});
+
+it('findByTransKeysAndLanguages returns matching entities in one query', function () {
+    $rows = [new Translation('eng-GB', 'a', 'A')];
+    [$qb] = makeQbWithQuery($rows);
+    $repo = makeTranslationRepo($qb);
+
+    expect($repo->findByTransKeysAndLanguages(['a'], ['eng-GB']))->toBe($rows);
+});
+
+it('findByTransKeysAndLanguages returns an empty array without querying for empty input', function () {
+    [$qb, $query] = makeQbWithQuery();
+    $query->expects(testMock(PHPUnit\Framework\TestCase::class)->never())->method('getResult');
+    $repo = makeTranslationRepo($qb);
+
+    expect($repo->findByTransKeysAndLanguages([], ['eng-GB']))->toBe([])
+        ->and($repo->findByTransKeysAndLanguages(['a'], []))->toBe([]);
 });
