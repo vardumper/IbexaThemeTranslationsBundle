@@ -1,0 +1,12 @@
+{
+    "recipes": {
+        "vardumper/ibexa-theme-translations-bundle": ["1.0"]
+    },
+    "branch": "main",
+    "is_contrib": false,
+    "_links": {
+        "repository": "github.com/vardumper/IbexaThemeTranslationsBundle",
+        "origin_template": "{package}:{version}@github.com/vardumper/IbexaThemeTranslationsBundle:main",
+        "recipe_template": "https://raw.githubusercontent.com/vardumper/IbexaThemeTranslationsBundle/main/flex/recipes/{package_dotted}.{version}.json"
+    }
+}

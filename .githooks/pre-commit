@@ -204,5 +204,19 @@ if ! $PASS; then
 else
   printf "pre commit hook ${GREEN}SUCCEEDED${NC}. Took ${YELLOW}${DURATION}${NC} seconds\n"
   git add $CHANGED_FILES
+
+  # Version immutability: record the exact tree that just passed all checks
+  # (after every auto-fix has been staged). The pre-push hook refuses to
+  # push any commit whose tree differs from this one — i.e. commits that
+  # were amended, rebased, or created with --no-verify after this run.
+  # This guarantees CI (GitHub Actions) always runs on the exact version
+  # that passed the local checks.
+  VERIFIED_TREE=$(git write-tree)
+  if [ -z "$VERIFIED_TREE" ]; then
+    printf "pre commit hook ${RED}FAILED${NC}: could not record verified tree (git write-tree failed)\n"
+    exit 1
+  fi
+  printf "Verified tree: ${GREEN}%s${NC} (recorded for pre-push immutability check)\n" "$VERIFIED_TREE"
+  printf '%s\n' "$VERIFIED_TREE" > "$(git rev-parse --git-dir)/verified-tree"
   exit 0
 fi

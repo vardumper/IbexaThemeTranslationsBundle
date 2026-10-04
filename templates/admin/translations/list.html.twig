@@ -111,7 +111,7 @@
                             title="Auto-translate"
                             style="padding:2px 6px; margin-right:4px;">
                         <svg class="ibexa-icon ibexa-icon--small ibexa-icon--languages">
-                            <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#languages"></use>
+                            <use xlink:href="{{ ibexa_icon_path('translation-language') }}"></use>
                         </svg>
                     </button>
                 {% else %}
@@ -121,7 +121,7 @@
                             title="Automatic Translation service is not configured"
                             style="padding:2px 6px; margin-right:4px; opacity:0.4; cursor:not-allowed;">
                         <svg class="ibexa-icon ibexa-icon--small ibexa-icon--languages">
-                            <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#languages"></use>
+                            <use xlink:href="{{ ibexa_icon_path('translation-language') }}"></use>
                         </svg>
                     </button>
                 {% endif %}
@@ -148,7 +148,7 @@
                 {{ translation.languageCode }}
                 {% if translation.languageCode not in activeLanguages %}
                     <svg class="ibexa-icon ibexa-icon--small" style="fill:#f5a623; vertical-align:middle; margin-left:4px;" title="Language not active in any siteaccess">
-                        <use xlink:href="{{ ibexa_icon_path('warning') }}"></use>
+                        <use xlink:href="{{ ibexa_icon_path('alert-warning') }}"></use>
                     </svg>
                 {% endif %}
             {% endset %}
@@ -174,14 +174,14 @@
                                 title="Accept — apply this draft as the active translation"
                                 aria-label="Accept draft">
                             <svg class="ibexa-icon ibexa-icon--small ibexa-icon--approved">
-                                <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#approved"></use>
+                                <use xlink:href="{{ ibexa_icon_path('check-circle') }}"></use>
                             </svg>
                         </button>
                         <button type="button" class="btn ibexa-btn ibexa-btn--ghost btn-draft-revert"
                                 title="Revert — discard this draft"
                                 aria-label="Revert draft">
                             <svg class="ibexa-icon ibexa-icon--small ibexa-icon--undo">
-                                <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#undo"></use>
+                                <use xlink:href="{{ ibexa_icon_path('action-undo') }}"></use>
                             </svg>
                         </button>
                     </div>
@@ -195,7 +195,7 @@
                         <button type="button" class="btn ibexa-btn ibexa-btn--ghost inline-edit-check"
                                 style="display:none; flex-shrink:0;" title="Save" aria-label="Save">
                             <svg class="ibexa-icon ibexa-icon--small ibexa-icon--checkmark">
-                                <use xlink:href="/bundles/ibexaicons/img/all-icons.svg#checkmark"></use>
+                                <use xlink:href="{{ ibexa_icon_path('check-circle') }}"></use>
                             </svg>
                         </button>
                     </div>
@@ -238,6 +238,10 @@
     // URL templates for dynamically created drafts (ID 0 is replaced in JS)
     var DEEPL_DRAFT_ACCEPT_TMPL = '{{ path('ibexa_theme_translations.draft_accept', {'id': 0}) }}';
     var DEEPL_DRAFT_REVERT_TMPL = '{{ path('ibexa_theme_translations.draft_revert', {'id': 0}) }}';
+
+    // Icon sprite fragments (resolved via the host project's configured icon set)
+    var ICON_ACCEPT = '{{ ibexa_icon_path('check-circle') }}';
+    var ICON_REVERT = '{{ ibexa_icon_path('action-undo') }}';
 
     // CSRF tokens for the JSON endpoints (validated server-side)
     var CSRF_TOKENS = {
@@ -458,7 +462,7 @@
                 acceptBtn.className = 'btn ibexa-btn ibexa-btn--ghost btn-draft-accept';
                 acceptBtn.title = 'Accept draft';
                 acceptBtn.setAttribute('aria-label', 'Accept draft');
-                acceptBtn.innerHTML = '<svg class="ibexa-icon ibexa-icon--small ibexa-icon--approved"><use xlink:href="/bundles/ibexaicons/img/all-icons.svg#approved"></use></svg>';
+                acceptBtn.innerHTML = '<svg class="ibexa-icon ibexa-icon--small ibexa-icon--approved"><use xlink:href="' + ICON_ACCEPT + '"></use></svg>';
                 pendingDiv.appendChild(acceptBtn);
 
                 var revertBtn = document.createElement('button');
@@ -466,7 +470,7 @@
                 revertBtn.className = 'btn ibexa-btn ibexa-btn--ghost btn-draft-revert';
                 revertBtn.title = 'Revert draft';
                 revertBtn.setAttribute('aria-label', 'Revert draft');
-                revertBtn.innerHTML = '<svg class="ibexa-icon ibexa-icon--small ibexa-icon--undo"><use xlink:href="/bundles/ibexaicons/img/all-icons.svg#undo"></use></svg>';
+                revertBtn.innerHTML = '<svg class="ibexa-icon ibexa-icon--small ibexa-icon--undo"><use xlink:href="' + ICON_REVERT + '"></use></svg>';
                 pendingDiv.appendChild(revertBtn);
             }
 

@@ -38,17 +38,23 @@ While there are a couple of i18n concepts pre-included with Ibexa, they lack a u
 
 ## Installation
 
-### 1. Install the bundle
+### 1. Point Symfony Flex at this bundle's recipe (once per project)
 
-If your project uses [Symfony Flex](https://symfony.com/doc/current/setup/flex.html) (recommended), the bundle, its configuration, and routes are registered automatically:
+This bundle is proprietary and requires Ibexa DXP, so its [Flex recipe](https://symfony.com/doc/current/setup/flex_private_recipes.html) is not part of the public recipe index — it is hosted in this repository:
+
+```bash
+composer config extra.symfony.endpoint https://raw.githubusercontent.com/vardumper/IbexaThemeTranslationsBundle/main/flex/index.json
+```
+
+### 2. Install the bundle
 
 ```bash
 composer require vardumper/ibexa-theme-translations-bundle
 ```
 
-### 2. Run Migrations
+The bundle, its configuration, routes, and migrations are registered automatically.
 
-A migration file is automatically copied into your app's `migrations/` directory by the Flex recipe. Run it to create the required database tables:
+### 3. Run Migrations
 
 ```bash
 bin/console doctrine:migrations:migrate
@@ -87,6 +93,13 @@ doctrine:
 # config/routes/ibexa_theme_translations.yaml
 ibexa_theme_translations:
     resource: '@IbexaThemeTranslationsBundle/config/routes.yaml'
+```
+
+### Copy Migrations
+Copy the migration files from the bundle into your app's `migrations/` directory:
+
+```bash
+cp vendor/vardumper/ibexa-theme-translations-bundle/flex/recipe/migrations/*.php migrations/
 ```
 
 ### Run Migrations

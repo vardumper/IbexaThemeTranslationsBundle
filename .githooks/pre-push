@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Version immutability guard (pairs with .githooks/pre-commit).
+#
+# The pre-commit hook records the exact tree hash of the commit that passed
+# all checks in <git-dir>/verified-tree. This hook refuses to push any
+# commit whose tree differs from that recorded tree — i.e. commits that were
+# amended, rebased, or created with --no-verify after the hook last ran.
+#
+# This guarantees that GitHub Actions always runs on the exact version that
+# passed the local checks (no commit amends / force-pushes of unverified
+# content).
+#
+# Override (for pushing commits that were made elsewhere, e.g. a teammate's
+# branch): git push --no-verify
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
+
+ZERO_SHA=0000000000000000000000000000000000000000
+
+GIT_DIR=$(git rev-parse --git-dir)
+VERIFIED_TREE_FILE="$GIT_DIR/verified-tree"
+
+if [ ! -f "$VERIFIED_TREE_FILE" ]; then
+  printf "${RED}pre-push FAILED${NC}: no verified tree on record (${YELLOW}%s${NC}).\n" "$VERIFIED_TREE_FILE"
+  printf "Commit through the pre-commit hook first, or override with: git push --no-verify\n"
+  exit 1
+fi
+
+VERIFIED_TREE=$(cat "$VERIFIED_TREE_FILE")
+FAIL=false
+
+# stdin: <local ref> SP <local sha> SP <remote ref> SP <remote sha> LF
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # Skip branch deletions
+  if [ "$local_sha" = "$ZERO_SHA" ]; then
+    continue
+  fi
+
+  # ^{tree} peels tags/commits down to the tree object
+  PUSHED_TREE=$(git rev-parse "${local_sha}^{tree}" 2>/dev/null)
+  if [ -z "$PUSHED_TREE" ]; then
+    # Not a commit-like object; nothing to verify
+    continue
+  fi
+
+  if [ "$PUSHED_TREE" != "$VERIFIED_TREE" ]; then
+    printf "${RED}pre-push FAILED${NC} for ${YELLOW}%s${NC}\n" "$local_ref"
+    printf "  pushed tree:   %s\n" "$PUSHED_TREE"
+    printf "  verified tree: %s\n" "$VERIFIED_TREE"
+    printf "\nThis commit differs from the version that passed the pre-commit hook\n"
+    printf "(it was amended, rebased, or created with --no-verify afterwards).\n"
+    printf "Fix: make a fresh commit (no --amend) so the checks run again, or\n"
+    printf "override with: git push --no-verify\n"
+    FAIL=true
+  fi
+done
+
+if $FAIL; then
+  exit 1
+fi
+
+printf "${GREEN}pre-push: pushed version matches the verified commit${NC}\n"
+exit 0

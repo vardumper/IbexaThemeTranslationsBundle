@@ -1,0 +1,16 @@
+{
+    "manifests": {
+        "vardumper/ibexa-theme-translations-bundle": {
+            "manifest": {
+                "bundles": {
+                    "vardumper\\IbexaThemeTranslationsBundle\\IbexaThemeTranslationsBundle": ["all"]
+                },
+                "copy-from-package": {
+                    "flex/recipe/config/": "%CONFIG_DIR%/",
+                    "flex/recipe/migrations/": "migrations/"
+                }
+            },
+            "ref": "5b51bea13ff9f8595c5a8d1030ce2e38cd7f6d50"
+        }
+    }
+}

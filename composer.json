@@ -28,7 +28,7 @@
         "pagerfanta/pagerfanta": "^2.0|^3.8|^4.0",
         "psr/cache": "^1.0|^2.0|^3.0",
         "guzzlehttp/guzzle": "^7.10",
-        "guzzlehttp/promises": "^2.3",
+        "guzzlehttp/promises": "^2.3|^3.0",
         "nyholm/psr7": "^1.8.2",
         "symfony/security-csrf": "^5.4|^6.0|^7.0|^8.0"
     },
@@ -57,12 +57,18 @@
         "branch-alias": {
             "dev-main": "1.0.x-dev"
         },
+        "symfony": {
+            "endpoint": "https://raw.githubusercontent.com/vardumper/IbexaThemeTranslationsBundle/main/flex/index.json"
+        },
         "hooks": {
             "pre-commit": [
                 ".githooks/pre-commit"
             ],
             "commit-msg": [
                 ".githooks/commit-msg"
+            ],
+            "pre-push": [
+                ".githooks/pre-push"
             ]
         }
     },
