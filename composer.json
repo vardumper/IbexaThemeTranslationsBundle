@@ -27,7 +27,7 @@
         "league/csv": "^9.28",
         "pagerfanta/pagerfanta": "^2.0|^3.8|^4.0",
         "psr/cache": "^1.0|^2.0|^3.0",
-        "guzzlehttp/guzzle": "^7.10",
+        "guzzlehttp/guzzle": "^7.10|^8.0",
         "guzzlehttp/promises": "^2.3|^3.0",
         "nyholm/psr7": "^1.8.2",
         "symfony/security-csrf": "^5.4|^6.0|^7.0|^8.0"
