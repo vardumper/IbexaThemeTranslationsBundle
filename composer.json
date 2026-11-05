@@ -22,7 +22,7 @@
         "symfony/form": "^5.4|^6.0|^7.0|^8.0",
         "symfony/validator": "^5.4|^6.0|^7.3.11|^8.0",
         "doctrine/orm": "^2.11|^3.0",
-        "doctrine/doctrine-bundle": "^2.7.2",
+        "doctrine/doctrine-bundle": "^2.7.2|^3.0",
         "twig/twig": "^3.23",
         "league/csv": "^9.28",
         "pagerfanta/pagerfanta": "^2.0|^3.8|^4.0",
@@ -39,7 +39,7 @@
         "rector/swiss-knife": "^2.3.5",
         "symplify/easy-coding-standard": "^13.0.4",
         "pestphp/pest": ">=4.4.1",
-        "ibexa/automated-translation": "^4.4|^5.0.5",
+        "ibexa/automated-translation": "^4.4|^5.0.5|5.0.x-dev",
         "doctrine/doctrine-fixtures-bundle": "^3.5|^4.3.1",
         "phpmd/phpmd": "^2.15"
     },
@@ -91,5 +91,11 @@
         "swiss-knife-privatize-constants": "vendor/bin/swiss-knife privatize-constants ./src",
         "git-hooks-init": "vendor/bin/cghooks add --ignore-lock",
         "git-hooks-update": "vendor/bin/cghooks update"
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/vardumper/automated-translation"
+        }
+    ]
 }

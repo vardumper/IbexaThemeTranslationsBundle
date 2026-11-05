@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "472412e86dd55a86eb2fd3227af05b7d",
+    "content-hash": "23b6c99ce9b0a73e2c63e7904c65427f",
     "packages": [
         {
             "name": "api-platform/core",
@@ -13102,56 +13102,58 @@
         },
         {
             "name": "ibexa/automated-translation",
-            "version": "v5.0.10",
+            "version": "5.0.x-dev",
             "source": {
                 "type": "git",
-                "url": "https://github.com/ibexa/automated-translation.git",
-                "reference": "f8ff1bf6f2ee951403b6ea80693bedbee8b5a4bf"
+                "url": "https://github.com/vardumper/automated-translation.git",
+                "reference": "6de0d5e00645e1962aa98d1cbcb6f0797239901b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ibexa/automated-translation/zipball/f8ff1bf6f2ee951403b6ea80693bedbee8b5a4bf",
-                "reference": "f8ff1bf6f2ee951403b6ea80693bedbee8b5a4bf",
+                "url": "https://api.github.com/repos/vardumper/automated-translation/zipball/6de0d5e00645e1962aa98d1cbcb6f0797239901b",
+                "reference": "6de0d5e00645e1962aa98d1cbcb6f0797239901b",
                 "shasum": ""
             },
             "require": {
                 "ext-dom": "*",
                 "ext-libxml": "*",
                 "guzzlehttp/guzzle": "^7.9",
-                "ibexa/admin-ui": "~5.0.0",
-                "ibexa/core": "~5.0.0",
-                "ibexa/fieldtype-richtext": "~5.0.0",
+                "ibexa/admin-ui": "~5.0.0@dev|~6.0.x-dev",
+                "ibexa/core": "~5.0.0@dev|~6.0.x-dev",
+                "ibexa/fieldtype-richtext": "~5.0.0@dev|~6.0.x-dev",
                 "php": "^8.3",
-                "symfony/console": "^7.4",
-                "symfony/event-dispatcher": "^7.4",
-                "symfony/form": "^7.4",
-                "symfony/http-foundation": "^7.4",
-                "symfony/routing": "^7.4",
-                "symfony/yaml": "^7.4"
+                "symfony/console": "^7.4|^8.1",
+                "symfony/event-dispatcher": "^7.4|^8.1",
+                "symfony/form": "^7.4|^8.1",
+                "symfony/http-foundation": "^7.4|^8.1",
+                "symfony/routing": "^7.4|^8.1",
+                "symfony/yaml": "^7.4|^8.1"
             },
             "require-dev": {
                 "dg/bypass-finals": "^1.3",
-                "ibexa/calendar": "~5.0",
-                "ibexa/code-style": "~2.0.0",
-                "ibexa/content-forms": "~5.0",
-                "ibexa/design-engine": "~5.0",
-                "ibexa/doctrine-schema": "~5.0",
-                "ibexa/fieldtype-page": "~5.0",
-                "ibexa/http-cache": "~5.0",
-                "ibexa/migrations": "~5.0",
-                "ibexa/notifications": "~5.0",
-                "ibexa/rector": "~5.0",
-                "ibexa/rest": "~5.0",
-                "ibexa/search": "~5.0",
-                "ibexa/twig-components": "~5.0",
-                "ibexa/user": "~5.0",
+                "ibexa/calendar": "~5.0.x-dev",
+                "ibexa/code-style": "~2.3.1",
+                "ibexa/content-forms": "~5.0.x-dev",
+                "ibexa/design-engine": "~5.0.x-dev",
+                "ibexa/doctrine-migrations": "~5.0.x-dev",
+                "ibexa/doctrine-schema": "~5.0.x-dev",
+                "ibexa/fieldtype-page": "~5.0.x-dev",
+                "ibexa/http-cache": "~5.0.x-dev",
+                "ibexa/migrations": "~5.0.x-dev",
+                "ibexa/notifications": "~5.0.x-dev",
+                "ibexa/rector": "~5.0.x-dev",
+                "ibexa/rest": "~5.0.x-dev",
+                "ibexa/search": "~5.0.x-dev",
+                "ibexa/twig-components": "~5.0.x-dev",
+                "ibexa/user": "~5.0.x-dev",
                 "phpmd/phpmd": "^2.6",
                 "phpstan/phpstan": "^2.0",
                 "phpstan/phpstan-phpunit": "^2.0",
                 "phpstan/phpstan-symfony": "^2.0",
-                "phpunit/phpunit": "^9.5",
+                "phpunit/phpunit": "^9.6",
                 "squizlabs/php_codesniffer": "^3.2"
             },
+            "default-branch": true,
             "type": "ibexa-bundle",
             "extra": {
                 "branch-alias": {
@@ -13165,20 +13167,45 @@
                     "Ibexa\\Contracts\\AutomatedTranslation\\": "src/contracts/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "Ibexa\\Tests\\AutomatedTranslation\\": "tests/lib/",
+                    "Ibexa\\Tests\\Bundle\\AutomatedTranslation\\": "tests/bundle/"
+                }
+            },
+            "scripts": {
+                "fix-cs": [
+                    "php-cs-fixer fix -v --config=.php-cs-fixer.php --show-progress=dots"
+                ],
+                "fix-cs-changed": [
+                    "@fix-cs $(git diff ${GIT_DIFF_BASE:-origin/main} --diff-filter=ACMR --name-only \"*.php\"|paste -sd ' ')"
+                ],
+                "test": [
+                    "phpunit -c phpunit.xml.dist"
+                ],
+                "phpstan": [
+                    "phpstan analyse -c phpstan.neon"
+                ],
+                "check-cs-changed": [
+                    "@fix-cs-changed --dry-run"
+                ],
+                "check-cs": [
+                    "@fix-cs --dry-run"
+                ]
+            },
             "license": [
                 "(GPL-2.0-only or proprietary)"
             ],
             "authors": [
                 {
                     "name": "Ibexa AS",
-                    "email": "dev-team@ibexa.co",
-                    "homepage": "https://ibexa.co"
+                    "homepage": "https://ibexa.co",
+                    "email": "dev-team@ibexa.co"
                 },
                 {
                     "name": "Novactive",
-                    "email": "s.morel@novactive.com",
-                    "homepage": "http://www.novactive.us"
+                    "homepage": "http://www.novactive.us",
+                    "email": "s.morel@novactive.com"
                 }
             ],
             "description": "Ibexa Automated Translation Bundle provides interfaces to automatically translate a new content translation from different translation providers.",
@@ -13191,9 +13218,9 @@
                 "translation"
             ],
             "support": {
-                "source": "https://github.com/ibexa/automated-translation/tree/v5.0.10"
+                "source": "https://github.com/vardumper/automated-translation/tree/5.0"
             },
-            "time": "2026-08-20T15:15:39+00:00"
+            "time": "2026-11-04T23:13:09+00:00"
         },
         {
             "name": "ibexa/fieldtype-richtext",
@@ -17187,6 +17214,7 @@
     "stability-flags": {
         "brainmaestro/composer-git-hooks": 20,
         "ibexa/admin-ui": 20,
+        "ibexa/automated-translation": 20,
         "ibexa/core": 20
     },
     "prefer-stable": true,
