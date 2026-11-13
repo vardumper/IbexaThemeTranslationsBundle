@@ -17005,16 +17005,16 @@
         },
         {
             "name": "symplify/easy-coding-standard",
-            "version": "13.3.13",
+            "version": "13.3.15",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ecsphp/ecs.git",
-                "reference": "ceb2ac9fd79dc30841dbecb4e259f88ceb9d5600"
+                "reference": "4a975bfa3cee8b4ddb3b1fae9934e8ffde155271"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ecsphp/ecs/zipball/ceb2ac9fd79dc30841dbecb4e259f88ceb9d5600",
-                "reference": "ceb2ac9fd79dc30841dbecb4e259f88ceb9d5600",
+                "url": "https://api.github.com/repos/ecsphp/ecs/zipball/4a975bfa3cee8b4ddb3b1fae9934e8ffde155271",
+                "reference": "4a975bfa3cee8b4ddb3b1fae9934e8ffde155271",
                 "shasum": ""
             },
             "require": {
@@ -17047,9 +17047,9 @@
             ],
             "support": {
                 "issues": "https://github.com/ecsphp/ecs/issues",
-                "source": "https://github.com/ecsphp/ecs/tree/13.3.13"
+                "source": "https://github.com/ecsphp/ecs/tree/13.3.15"
             },
-            "time": "2026-11-02T22:11:38+00:00"
+            "time": "2026-11-07T20:02:40+00:00"
         },
         {
             "name": "ta-tikoma/phpunit-architecture-test",
